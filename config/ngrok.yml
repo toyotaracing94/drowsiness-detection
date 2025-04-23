@@ -1,0 +1,12 @@
+version: "2"
+authtoken: 2jH5FjbHIXd9ydBF7FNGVzuX170_6d2YNPrfoeqfiQHuNNpc
+apikey: ak_2kYVvLQJeNMQpa9e5AybY33dxLY
+#log: /home/pi/logs/ngrok.log
+#log_level: debug
+tunnels:
+  web:
+    proto: http
+    addr: 80
+  ssh:
+    proto: tcp
+    addr: 22
