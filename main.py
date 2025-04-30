@@ -28,6 +28,19 @@ def main():
         # Get the body-pose
         body_pose = pose_detector.find_pose(frame)
 
+        # Phone usage from pose
+        is_calling, dist = pose_detector.detect_phone_usage(
+            body_pose,
+            frame_width=frame.shape[1],
+            frame_height=frame.shape[0]
+        )
+
+        if is_calling:
+            cv2.putText(image, "Making a phone call", (50, 150), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+
+        if dist is not None:
+            cv2.putText(image, f"Distance: {dist:.2f}", (20, frame.shape[0] - 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 0), 2)
+
 
         if face_landmarks.multi_face_landmarks:
             for face_landmarks in face_landmarks.multi_face_landmarks:

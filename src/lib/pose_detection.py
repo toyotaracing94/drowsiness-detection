@@ -1,4 +1,4 @@
-
+import math
 import cv2
 
 from mediapipe.python.solutions import pose, hands
@@ -90,3 +90,37 @@ class PoseDetection():
             left_hand_pixels.append((x, y))
 
         return right_hand_pixels, left_hand_pixels
+    
+    def detect_phone_usage(self, pose_landmarks, frame_width=640, frame_height=480, threshold=150):
+        """
+        Detect if a hand is near the ear based on pose landmarks only.
+        """
+        if not pose_landmarks or not pose_landmarks.pose_landmarks:
+            return False, None
+
+        lm = pose_landmarks.pose_landmarks.landmark
+
+        # Convert normalized coordinates to pixel coordinates
+        def to_pixel(index):
+            return int(lm[index].x * frame_width), int(lm[index].y * frame_height)
+
+        left_wrist = to_pixel(15)
+        right_wrist = to_pixel(16)
+        left_ear = to_pixel(7)
+        right_ear = to_pixel(8)
+
+        # Calculate distances
+        left_dist = self.calculate_distance(left_wrist, left_ear)
+        right_dist = self.calculate_distance(right_wrist, right_ear)
+
+        # Check if either wrist is close to the corresponding ear
+        if left_dist < threshold or right_dist < threshold:
+            return True, min(left_dist, right_dist)
+
+        return False, None
+    
+    def calculate_distance(self, point1, point2):
+        """
+        Calculate Euclidean distance between two (x, y) points.
+        """
+        return math.sqrt((point1[0] - point2[0]) ** 2 + (point1[1] - point2[1]) ** 2)
