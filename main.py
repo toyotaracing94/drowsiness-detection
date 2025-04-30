@@ -1,14 +1,19 @@
 import cv2
+from fastapi import FastAPI
+from fastapi.responses import StreamingResponse
 
 from src.lib.drowsiness_detection import DrowsinessDetection
 from src.lib.pose_detection import PoseDetection
 from src.utils.logging import logging_default
 
-def main():
-    capture = cv2.VideoCapture(0)
-    drowsiness_detector = DrowsinessDetection("config/detection_settings.json")
-    pose_detector = PoseDetection("config/detection_settings.json")
+app = FastAPI()
 
+capture = cv2.VideoCapture(0)
+drowsiness_detector = DrowsinessDetection("config/detection_settings.json")
+pose_detector = PoseDetection("config/detection_settings.json")
+
+
+def main():
     while True:
         # Capture the video stream
         # TODO: make the camera selection an automatic one. If its on windows development, capture using
@@ -21,10 +26,8 @@ def main():
         
         # Get the Multi-Face Mesh Landmarks (486 points)
         face_landmarks = drowsiness_detector.detect_landmarks(frame)
-
         # Find hand landmarks
         hand_results = pose_detector.find_hand_landmarks(image)
-
         # Get the body-pose
         body_pose = pose_detector.find_pose(frame)
 
@@ -105,16 +108,20 @@ def main():
                 for pt in hand:
                     cv2.circle(image, pt, 2, (0, 255, 255), -1)  # Yellow circle for hand landmarks
                         
-        # Display the result
-        side_by_side = cv2.hconcat([frame, image])
-        cv2.imshow('Side by Side', side_by_side)
+        # Encode the frame as JPEG
+        success, buffer = cv2.imencode('.jpg', image)
+        if not success:
+            continue
 
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
+        frame_bytes = buffer.tobytes()
+        yield (b'--frame\r\n'
+               b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
 
-    capture.release()
-    cv2.destroyAllWindows()
-
-
-if __name__ == "__main__":
-    main()
+@app.get(
+    "/video",
+    summary="Live Video Stream",
+    description="Returns a live video stream (MJPEG) captured from the webcam. "
+                "Note: Swagger UI does not support streaming, so use the `/` route in a browser to view the stream."
+)
+def video_feed():
+    return StreamingResponse(main(), media_type="multipart/x-mixed-replace; boundary=frame")
