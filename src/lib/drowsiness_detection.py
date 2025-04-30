@@ -18,6 +18,7 @@ class DrowsinessDetection():
         self.left_eye_landmarks = [33, 160, 158, 133, 153, 144]
         self.right_eye_landmarks = [362, 385, 387, 263, 373, 380]
         self.mouth_landmarks =  [61, 39, 0, 269, 291, 405, 17, 181]
+        self.pose_landmarks = [1, 33, 61, 199, 263, 291]
         self.drowsiness_frame_counter = 0
         self.yawn_frame_counter = 0
 
@@ -46,6 +47,51 @@ class DrowsinessDetection():
         rgb_image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         results = self.face_mesh.process(rgb_image)
         return results
+    
+    def estimate_head_pose(self, image : np.ndarray, face_landmarks):
+        """
+        Estimate head pose (yaw, pitch, roll) from face landmarks using solvePnP.
+        """
+        face_3d = []
+        face_2d = []
+        img_h, img_w, _ = image.shape
+
+        # Extract 3D and 2D landmarks for pose estimation
+        for idx in self.pose_landmarks:
+            lm = face_landmarks.landmark[idx]
+            x, y = int(lm.x * img_w), int(lm.y * img_h)
+
+            # 2D Coordinates
+            face_2d.append([x, y])
+
+            # 3D Coordinates (using the Z value)
+            face_3d.append([x, y, lm.z])
+
+        face_2d = np.array(face_2d, dtype=np.float64)
+        face_3d = np.array(face_3d, dtype=np.float64)
+
+        # Camera matrix
+        focal_length = 1 * img_w
+        cam_matrix = np.array([[focal_length, 0, img_w / 2],
+                               [0, focal_length, img_h / 2],
+                               [0, 0, 1]])
+
+        dist_matrix = np.zeros((4, 1), dtype=np.float64)
+
+        # Solve PnP (Perspective-n-Point) to get the rotation and translation vectors
+        success, rot_vec, trans_vec = cv2.solvePnP(face_3d, face_2d, cam_matrix, dist_matrix)
+
+        # Get rotational matrix from rotation vector
+        rmat, _ = cv2.Rodrigues(rot_vec)
+
+        # Decompose the rotation matrix to get Euler angles (yaw, pitch, roll)
+        angles, _, _, _, _, _ = cv2.RQDecomp3x3(rmat)
+
+        x_angle = angles[0] * 360
+        y_angle = angles[1] * 360
+        z_angle = angles[2] * 360
+
+        return x_angle, y_angle, z_angle
 
     def extract_mouth_landmarks(self, face_landmarks, frame_width = 640, frame_height = 480):
         """
@@ -107,6 +153,7 @@ class DrowsinessDetection():
         consist of 8 landmark
 
         Reference
+         - https://www.mdpi.com/1424-8220/24/19/6261
          - https://www.mdpi.com/2313-433X/9/5/91
         """
         A = self.euclidean_distance(mouth[1], mouth[7])
