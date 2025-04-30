@@ -1,0 +1,6 @@
+{
+    "eye_aspect_ratio_threshold": 0.25,
+    "eye_aspect_ratio_consec_frames": 48,
+    "mouth_aspect_ration_threshold" : 1.5,
+    "mouth_aspect_ration_consec_frames" : 15
+}

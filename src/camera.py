@@ -1,4 +1,3 @@
-from flask import Flask, Response, render_template, jsonify, request as flask_req
 import cv2
 import mediapipe as mp
 from imutils import face_utils
@@ -244,8 +243,6 @@ def generate_video2(cameraIndex=0):
                     # Extract the seconds
                     minuteCount = current_time.minute
 
-                    
-                    
                     if y_angle < -10:
                         head_pose_text = "Looking Left"
                         is_behavior_danger = True
