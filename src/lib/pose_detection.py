@@ -1,12 +1,12 @@
-import math
-import cv2
 import json
-import numpy as np
+import math
 
-from mediapipe.python.solutions import pose, hands
-import mediapipe.python.solutions.pose as mp_pose
+import cv2
+import numpy as np
+from mediapipe.python.solutions import hands, pose
 
 from src.utils.logging import logging_default
+
 
 class PoseDetection():
     def __init__(self, pose_detection_settings_path: str):

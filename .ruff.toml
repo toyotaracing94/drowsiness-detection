@@ -1,0 +1,46 @@
+# Exclude a variety of commonly ignored directories.
+exclude = [
+    "build",
+    "bin",
+    "dist",
+    "**/__pycache__/",
+    "spec",
+    "src/resources/",
+    "log",
+    "config",
+    "setup.py",
+    ".pytest_cache",
+    ".pytype",
+    ".ruff_cache",
+    ".eggs",
+    ".git",
+]
+
+line-length = 88
+indent-width = 4
+
+[lint]
+# Enable Pyflakes (`F`) and a subset of the pycodestyle (`E`)  codes by default.
+# Unlike Flake8, Ruff doesn't enable pycodestyle warnings (`W`) or
+# McCabe complexity (`C901`) by default.
+select = ["E4", "E7", "E9", "F"]
+extend-select = ["N", "R", "I"]
+ignore = ["E501", "N814", "N802", "F405", "RET504"]
+
+
+# Allow fix for all enabled rules (when `--fix`) is provided.
+fixable = ["ALL"]
+unfixable = []
+
+[format]
+# Like Black, use double quotes for strings.
+quote-style = "double"
+
+# Like Black, indent with spaces, rather than tabs.
+indent-style = "space"
+
+# Like Black, respect magic trailing commas.
+skip-magic-trailing-comma = false
+
+# Like Black, automatically detect the appropriate line ending.
+line-ending = "auto"

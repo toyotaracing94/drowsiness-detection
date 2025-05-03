@@ -1,10 +1,12 @@
 import json
-import cv2
 import math
+
+import cv2
 import numpy as np
-from mediapipe.python.solutions import drawing_utils, face_mesh
+from mediapipe.python.solutions import face_mesh
 
 from src.utils.logging import logging_default
+
 
 class DrowsinessDetection():
     def __init__(self, detection_settings_path: str):
@@ -61,7 +63,7 @@ class DrowsinessDetection():
             "Loaded config - EAR: %.2f, EAR Frames: %d, MAR: %.2f, MAR Frames: %d",
             self.ear_ratio, self.ear_consec_frames, self.mouth_aspect_ratio_threshold, self.mouth_aspect_ratio_consec_frames
         )
-        return None
+        return
 
 
     def detect_landmarks(self, image: np.ndarray) -> list:
@@ -263,12 +265,12 @@ class DrowsinessDetection():
         ----------
             The Mouth Aspect Ratio (EAR) value
         """
-        A = self.euclidean_distance(mouth[1], mouth[7])
-        B = self.euclidean_distance(mouth[2], mouth[6])
-        C = self.euclidean_distance(mouth[3], mouth[5])
-        D = self.euclidean_distance(mouth[0], mouth[4])
+        a = self.euclidean_distance(mouth[1], mouth[7])
+        b = self.euclidean_distance(mouth[2], mouth[6])
+        c = self.euclidean_distance(mouth[3], mouth[5])
+        d = self.euclidean_distance(mouth[0], mouth[4])
 
-        mar = (A + B + C) / (2.0 * D)
+        mar = (a + b + c) / (2.0 * d)
         return mar
 
     def euclidean_distance(self, point1 : list, point2 : list):
