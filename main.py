@@ -6,12 +6,11 @@ from src.lib.drowsiness_detection import DrowsinessDetection
 from src.lib.pose_detection import PoseDetection
 from src.utils.logging import logging_default
 
-app = FastAPI()
-
 capture = cv2.VideoCapture(0)
-drowsiness_detector = DrowsinessDetection("config/detection_settings.json")
-pose_detector = PoseDetection("config/detection_settings.json")
+drowsiness_detector = DrowsinessDetection("config/drowsiness_detection_settings.json")
+pose_detector = PoseDetection("config/pose_detection_settings.json")
 
+app = FastAPI()
 
 def main():
     while True:
@@ -27,9 +26,9 @@ def main():
         # Get the Multi-Face Mesh Landmarks (486 points)
         face_landmarks = drowsiness_detector.detect_landmarks(frame)
         # Find hand landmarks
-        hand_results = pose_detector.find_hand_landmarks(image)
+        hand_results = pose_detector.detect_hand_landmarks(image)
         # Get the body-pose
-        body_pose = pose_detector.find_pose(frame)
+        body_pose = pose_detector.detect_body_pose(frame)
 
         # Phone usage from pose
         is_calling, dist = pose_detector.detect_phone_usage(
@@ -70,13 +69,16 @@ def main():
                 cv2.putText(image, head_pose_text, (50, 120), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
 
                 # Get the left-eye and right-eye landmark
-                left_eye_landmark, right_eye_landmark = drowsiness_detector.extract_eye_landmarks(face_landmarks)
+                left_eye_landmark, right_eye_landmark = drowsiness_detector.extract_eye_landmarks(face_landmarks, frame.shape[1], frame.shape[0])
 
                 # Get the mouth landmark
-                mouth_eye_landmark = drowsiness_detector.extract_mouth_landmarks(face_landmarks)
+                mouth_eye_landmark = drowsiness_detector.extract_mouth_landmarks(face_landmarks,frame.shape[1], frame.shape[0])
 
                 # Calculate the EAR Ratio to check drowsiness
-                ear = drowsiness_detector.calculate_ear(left_eye_landmark, right_eye_landmark)
+                left_ear = drowsiness_detector.calculate_ear(left_eye_landmark)
+                right_ear = drowsiness_detector.calculate_ear(right_eye_landmark) 
+                # Average the EAR of both eyes
+                ear = (left_ear + right_ear) / 2.0
 
                 # Calculate the MAR Ratio to check yawning
                 mar = drowsiness_detector.calculate_mar(mouth_eye_landmark)
@@ -103,7 +105,7 @@ def main():
 
         # Draw hand landmarks
         if hand_results.multi_hand_landmarks:
-            hand_landmarks = pose_detector.extract_hand_landmarks2(hand_results, image.shape[1], image.shape[0])
+            hand_landmarks = pose_detector.extract_hand_landmarks(hand_results, image.shape[1], image.shape[0])
             for hand in hand_landmarks:
                 for pt in hand:
                     cv2.circle(image, pt, 2, (0, 255, 255), -1)  # Yellow circle for hand landmarks
