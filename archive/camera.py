@@ -5,13 +5,13 @@ import numpy as np
 import time
 import dlib
 import math
-from phone import poseDetector
+from archive.phone import poseDetector
 import base64
 import asyncio
 from websockets.sync.client import connect
 import datetime
 import json
-import post_ip
+import archive.post_ip as post_ip
 import os
 
 app = Flask(__name__)

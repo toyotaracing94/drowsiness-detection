@@ -8,3 +8,4 @@ for i in range(5):  # Coba 5 kamera pertama
         cap.release()
     else:
         print(f"Kamera {i} tidak tersedia")
+ 
