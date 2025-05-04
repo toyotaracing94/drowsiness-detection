@@ -290,6 +290,22 @@ class DrowsinessDetection():
         """
         return math.sqrt((point1[0] - point2[0]) ** 2 + (point1[1] - point2[1]) ** 2)
 
+    def check_ear_below_threshold(self, ear: float) -> bool:
+        """
+        Check if the EAR is below the threshold, indicating possible drowsiness.
+
+        Parameters
+        ----------
+        ear : float
+            The EAR value
+
+        Return
+        ----------
+        bool : 
+            True if EAR is below the threshold, indicating potential drowsiness, False otherwise.
+        """
+        return ear < self.ear_ratio
+
     def check_drowsiness(self, ear : float) -> bool:
         """
         Function to check the drowsiness based on the EAR value. The current default EAR
@@ -304,13 +320,29 @@ class DrowsinessDetection():
         ----------
             True if EAR ratio is exceed theshold means driver sleepy sign by eye fatigue, False otherwise.  
         """
-        if ear < self.ear_ratio:
+        if self.check_ear_below_threshold(ear):
             self.drowsiness_frame_counter += 1
             if self.drowsiness_frame_counter >= self.ear_consec_frames:
                 return True
         else:
             self.drowsiness_frame_counter = 0
         return False
+    
+    def check_mar_exceed_threshold(self, mar: float) -> bool:
+        """
+        Check if the MAR is exceed the threshold, indicating possible Yawning.
+
+        Parameters
+        ----------
+        mar : float
+            The MAR value
+
+        Return
+        ----------
+        bool : 
+            True if MAR is exceed the threshold, indicating potential yawning, False otherwise.
+        """
+        return mar > self.mouth_aspect_ratio_threshold
     
     def check_yawning(self, mar : float) -> bool:
         """
@@ -326,7 +358,7 @@ class DrowsinessDetection():
         ----------
             True if MAR ratio is exceed theshold means driver sleepy sign by yawning, False otherwise.  
         """
-        if mar > self.mouth_aspect_ratio_threshold:
+        if self.check_mar_exceed_threshold(mar):
             self.yawn_frame_counter +=1
             if self.yawn_frame_counter >= self.mouth_aspect_ratio_threshold:
                 return True
