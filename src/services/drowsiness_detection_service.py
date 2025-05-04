@@ -122,6 +122,17 @@ def generate_drowsiness_stream():
                 if drowsiness_detector.check_drowsiness(ear):
                     cv2.putText(image, "Drowsy!", (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
 
+                    # TODO : Find a mechanism to like a right timing to send those drowsiness event to the server
+                    # Just think about it. Let's say in one timeframe or like just say for arguments
+                    # it's 10 seconds. In that 10 second there will be like multiple frames (mark with this *)
+                    # There's no way we want in every frame to send data to that, server will be overwhelmed
+                    # Let's say this below ...
+                    # <START DROWSINESS TRIGGER> * * * * * * *  ...  * <SOMEHOW DRIVER WAKES UP>
+                    # at what event (*) should we send this into server?
+                    # For now I'll just add this, always set send_to_server to false for now
+
+                    socket_trigger.save_image(image, 'DROWSINESS', '', 'UPLOAD_IMAGE')
+
                 # Check for yawning
                 if drowsiness_detector.check_yawning(mar):
                     cv2.putText(image, "Yawning!", (50, 80), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 255), 2)

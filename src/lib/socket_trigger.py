@@ -33,6 +33,8 @@ class SocketTrigger:
         self.vehicle_id = config["vehicle_id"]
         self.server_ip = config["server"]
         self.device_name = config["device"]
+        self.send_to_server = config["send_to_server"]
+
         
         # Construct the WebSocket URL
         self.ws_url = f"ws://{self.server_ip}?vehicle_id={self.vehicle_id}&device={self.device_name}"
@@ -64,26 +66,29 @@ class SocketTrigger:
             # Log the beginning of the process
             logging_default.info(f"Saving image for event: {event}, target: {target}, websocket event: {wsEvent}")
 
-            with connect(self.ws_url) as websocket:
-                # Save the file in the local system
-                timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-                cv2.imwrite(f"image_event/frame{timestamp}.jpg", image)
+            if self.send_to_server:
+                with connect(self.ws_url) as websocket:
+                    # Save the file in the local system
+                    timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+                    cv2.imwrite(f"image_event/frame{timestamp}.jpg", image)
 
-                with open(f"image_event/frame{timestamp}.jpg", "rb") as image_file:
-                    encoded_string = base64.b64encode(image_file.read())
-                    jsonData = {
-                        "event" : wsEvent,
-                        "vehicle_id" : self.vehicle_id,
-                        "target" : target,
-                        "data" : {
-                            "message": "Image Upload",
-                            "image": "%s"%encoded_string,
-                            "behavior_type" : event
+                    with open(f"image_event/frame{timestamp}.jpg", "rb") as image_file:
+                        encoded_string = base64.b64encode(image_file.read())
+                        jsonData = {
+                            "event" : wsEvent,
+                            "vehicle_id" : self.vehicle_id,
+                            "target" : target,
+                            "data" : {
+                                "message": "Image Upload",
+                                "image": "%s"%encoded_string,
+                                "behavior_type" : event
+                            }
                         }
-                    }
-                    websocket.send(json.dumps(jsonData))
-                    message = websocket.recv()
-                    logging_default.info(f"Image saved successfully for event: {event}. Message : {message}")
+                        websocket.send(json.dumps(jsonData))
+                        message = websocket.recv()
+                        logging_default.info(f"Image saved successfully for event: {event}. Message : {message}")
+            else:
+                logging_default.info(f"Will not send any event to server. It's on DEBUG mode!")
 
         except Exception as e:
             logging_default.error(f"Error saving image for event: {event}. Error: {e}")
