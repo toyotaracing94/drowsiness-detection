@@ -8,3 +8,6 @@ venv
 
 # Logs
 log
+
+# Image events
+image_event
