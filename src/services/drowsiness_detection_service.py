@@ -80,9 +80,9 @@ def generate_drowsiness_stream():
 
         # Detect the drowsiness and the head pose estimation from the face landmarks information
         if face_landmarks.multi_face_landmarks:
-            for face_landmarks in face_landmarks.multi_face_landmarks:
+            for face_landmark in face_landmarks.multi_face_landmarks:
                 # Get the head pose (yaw, pitch, roll)
-                x_angle, y_angle, z_angle = drowsiness_detector.estimate_head_pose(frame, face_landmarks)
+                x_angle, y_angle, z_angle = drowsiness_detector.estimate_head_pose(frame, face_landmark)
 
                 # Draw the head pose direction
                 head_pose_text = "Looking Forward"
@@ -96,7 +96,7 @@ def generate_drowsiness_stream():
                     head_pose_text = "Looking Up"
 
                 # Draw the direction of head pose
-                p1 = (int(face_landmarks.landmark[1].x * frame.shape[1]), int(face_landmarks.landmark[1].y * frame.shape[0]))
+                p1 = (int(face_landmark.landmark[1].x * frame.shape[1]), int(face_landmark.landmark[1].y * frame.shape[0]))
                 p2 = (int(p1[0] + y_angle * 10), int(p1[1] - x_angle * 10))
                 cv2.line(image, p1, p2, (255, 0, 0), 3)
 
@@ -104,10 +104,10 @@ def generate_drowsiness_stream():
                 cv2.putText(image, head_pose_text, (50, 120), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
 
                 # Get the left-eye and right-eye landmark
-                left_eye_landmark, right_eye_landmark = drowsiness_detector.extract_eye_landmarks(face_landmarks, frame.shape[1], frame.shape[0])
+                left_eye_landmark, right_eye_landmark = drowsiness_detector.extract_eye_landmarks(face_landmark, frame.shape[1], frame.shape[0])
 
                 # Get the mouth landmark
-                mouth_eye_landmark = drowsiness_detector.extract_mouth_landmarks(face_landmarks,frame.shape[1], frame.shape[0])
+                mouth_eye_landmark = drowsiness_detector.extract_mouth_landmarks(face_landmark, frame.shape[1], frame.shape[0])
 
                 # Calculate the EAR Ratio to check drowsiness
                 left_ear = drowsiness_detector.calculate_ear(left_eye_landmark)
