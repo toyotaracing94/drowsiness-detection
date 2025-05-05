@@ -44,7 +44,7 @@ I think that installing python packages in secluded environment was simple can b
 1. Python 3.11 version
 2. Mediapipe 0.10.21 version
 
-So for python, you can search for their installer [here](https://www.python.org/downloads/release/python-31112/) and install them. If you have installed them, we can start the virtual environment creation. Of course you can try to install another python version, but keep in mind, I made this project in 3.11 so it can be more stable rather the new python version. I will explain how you can set up the environment in both Windows and Linux for the Raspberry Pi, but keep in mind Windows version, this code probably will favor more on the Linux side, but it's a good idea to be able to run this on Windows aswell. So, before doing the environement set-up, please kindly clone this repo 
+So for python, you can search for their installer [here](https://www.python.org/downloads/release/python-31112/) and install them. If you have installed them, we can start the virtual environment creation. Of course you can try to install another python version, but keep in mind, I made this project in 3.11 so it can be more stable rather the new python version. if you decided to use another python version, do mind that the `requirements.txt` that I have prepared for you will be conflict, you can one-by-one install the package that I list on that `requirements.txt`. I will explain how you can set up the environment in both Windows and Linux for the Raspberry Pi, but keep in mind Windows version, this code probably will favor more on the Linux side, but it's a good idea to be able to run this on Windows aswell. So, before doing the environement set-up, please kindly clone this repo 
 
 ### Installing environment through Virtual Env (Windows)
 First go do the work directory. 
@@ -52,10 +52,16 @@ First go do the work directory.
 cd drowsiness-detection
 ```
 
-Then after that, we can create our virtual environment under `drowsiness-detection/venv` with the following command
+Then after that, if your Python base already in 3.11 version, we can directly create our virtual environment under `drowsiness-detection/venv` with the following command
 ```bash
 python -m venv venv
 ```
+
+But if your machine have multiple python version, you can do this
+```bash
+py -3.11 -m venv venv
+```
+
 
 You will see now a folder named `venv` will be created in your work directory. Now that we have a virtual environment been created, we now need to activate it.
 
@@ -121,7 +127,7 @@ The detailed instruction for this spesific step can be found [here](https://gith
 After that, you can see the virtual environment has been activated by seeing the (venv) in your terminal. After you activate the virtual environment, you can add packages to it using `pip`. You can also create a description of your dependencies using `pip`. In this repo, I have made it the packages that required in order to run this app, so simply just install them with this following command
 
 ```bash
-pip install -r requirements.txt
+pip install -r requirements-linux.txt
 ```
 
 In linux, we will run the FastAPI using uvicorn and this will not install automatically when we install the FastAPI pip packages. So we can just do this'
