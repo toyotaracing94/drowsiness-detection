@@ -4,6 +4,13 @@ from src.lib.drowsiness_detection import DrowsinessDetection
 from src.lib.pose_detection import PoseDetection
 from src.lib.socket_trigger import SocketTrigger
 
+from src.utils.drawing_utils import (
+    draw_eye_landmarks,
+    draw_mouth_landmarks,
+    draw_hand_landmarks,
+    draw_head_pose_direction
+)
+
 # Initailize the hardware and the lib services
 camera = Camera()
 socket_trigger = SocketTrigger("config/api_settings.json")
@@ -96,9 +103,7 @@ def generate_drowsiness_stream():
                     head_pose_text = "Looking Up"
 
                 # Draw the direction of head pose
-                p1 = (int(face_landmark.landmark[1].x * frame.shape[1]), int(face_landmark.landmark[1].y * frame.shape[0]))
-                p2 = (int(p1[0] + y_angle * 10), int(p1[1] - x_angle * 10))
-                cv2.line(image, p1, p2, (255, 0, 0), 3)
+                draw_head_pose_direction(image,face_landmark, x_angle, y_angle)
 
                 # Add the head pose text to the frame
                 cv2.putText(image, head_pose_text, (50, 120), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
@@ -107,7 +112,7 @@ def generate_drowsiness_stream():
                 left_eye_landmark, right_eye_landmark = drowsiness_detector.extract_eye_landmarks(face_landmark, frame.shape[1], frame.shape[0])
 
                 # Get the mouth landmark
-                mouth_eye_landmark = drowsiness_detector.extract_mouth_landmarks(face_landmark, frame.shape[1], frame.shape[0])
+                mouth_landmark = drowsiness_detector.extract_mouth_landmarks(face_landmark, frame.shape[1], frame.shape[0])
 
                 # Calculate the EAR Ratio to check drowsiness
                 left_ear = drowsiness_detector.calculate_ear(left_eye_landmark)
@@ -116,7 +121,7 @@ def generate_drowsiness_stream():
                 ear = (left_ear + right_ear) / 2.0
 
                 # Calculate the MAR Ratio to check yawning
-                mar = drowsiness_detector.calculate_mar(mouth_eye_landmark)
+                mar = drowsiness_detector.calculate_mar(mouth_landmark)
 
                 # Check for drowsiness
                 if drowsiness_detector.check_drowsiness(ear):
@@ -140,64 +145,19 @@ def generate_drowsiness_stream():
                 # Draw the result of the eye drowsiness detection
                 if left_eye_landmark and right_eye_landmark:
                     # Draw connected circles for left eye
-                    for i in range(len(left_eye_landmark) - 1):
-                        pt1 = left_eye_landmark[i]
-                        pt2 = left_eye_landmark[i + 1]
-                        
-                        # Draw a line between consecutive points in green
-                        cv2.line(image, pt1, pt2, (0, 255, 0), 1)
-                        # Draw circles at the points in green
-                        cv2.circle(image, pt1, 2, (0, 255, 0), -1)
-                    
-                    # To close the left eye loop, connect the last point to the first in green
-                    pt1 = left_eye_landmark[-1]
-                    pt2 = left_eye_landmark[0]
-                    cv2.line(image, pt1, pt2, (0, 255, 0), 1)
-                    cv2.circle(image, pt1, 2, (0, 255, 0), -1)
-
-                    # Draw connected circles for right eye
-                    for i in range(len(right_eye_landmark) - 1):
-                        pt1 = right_eye_landmark[i]
-                        pt2 = right_eye_landmark[i + 1]
-                        
-                        # Draw a line between consecutive points in green
-                        cv2.line(image, pt1, pt2, (0, 255, 0), 1)
-                        # Draw circles at the points in green
-                        cv2.circle(image, pt1, 2, (0, 255, 0), -1)
-                    
-                    # To close the left eye loop, connect the last point to the first in green
-                    pt1 = right_eye_landmark[-1]
-                    pt2 = right_eye_landmark[0]
-                    cv2.line(image, pt1, pt2, (0, 255, 0), 1)
-                    cv2.circle(image, pt1, 2, (0, 255, 0), -1)
+                    draw_eye_landmarks(image, left_eye_landmark)
+                    # Draw connected circles for left eye
+                    draw_eye_landmarks(image, right_eye_landmark)
 
                 # Draw the mouth
-                if mouth_eye_landmark:
-                    # Drawing the line between the middle top and bottom of the lips
-                    cv2.line(image, mouth_eye_landmark[2], mouth_eye_landmark[6], (0, 255, 255), 2)
-
-                    for i in range(len(mouth_eye_landmark) - 1):
-                        pt1 = mouth_eye_landmark[i]
-                        pt2 = mouth_eye_landmark[i + 1]
-                        
-                        # Draw a line between consecutive points
-                        cv2.line(image, pt1, pt2, (0, 255, 0), 1)
-                        # Draw circles at the points
-                        cv2.circle(image, pt1, 2, (0, 0, 255), -1)
-
-                    pt1 = mouth_eye_landmark[-1]
-                    pt2 = mouth_eye_landmark[0]
-                    cv2.line(image, pt1, pt2, (0, 255, 0), 1)
-                    cv2.circle(image, pt1, 2, (0, 0, 255), 1)
-
+                if mouth_landmark:
+                    draw_mouth_landmarks(image, mouth_landmark)
 
         # Draw hand landmarks
         if hand_results.multi_hand_landmarks:
             hand_landmarks = pose_detector.extract_hand_landmarks(hand_results, image.shape[1], image.shape[0])
-            for hand in hand_landmarks:
-                for pt in hand:
-                    cv2.circle(image, pt, 2, (0, 255, 255), -1)  # Yellow circle for hand landmarks
-                        
+            draw_hand_landmarks(image, hand_landmarks)
+            
         # Encode the frame as JPEG
         success, buffer = cv2.imencode('.jpg', image)
         if not success:
