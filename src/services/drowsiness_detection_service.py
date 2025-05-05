@@ -64,9 +64,9 @@ def generate_drowsiness_stream():
         frame = cv2.flip(frame, 1) 
 
         # Copy the frame to be passed around and keep the original one
-        image = frame.copy()
         if not ret:
             break
+        image = frame.copy()
         
         # Get the Multi-Face Mesh Landmarks (486 points)
         face_landmarks = drowsiness_detector.detect_landmarks(frame)

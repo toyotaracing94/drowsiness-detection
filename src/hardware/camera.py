@@ -1,7 +1,8 @@
 import cv2
 import os
 import numpy as np
-import platform
+
+from src.utils.logging import logging_default
 
 # Only import PiCamera2 on Linux systems (Raspberry Pi)
 if os.name == 'posix':
@@ -31,11 +32,23 @@ class Camera:
 
     def get_capture(self) -> tuple[bool, np.ndarray]:
         if PI_CAMERA_AVAILABLE and hasattr(self, "picam2"):
-            frame = self.picam2.capture_array()
-            return True, frame
+            try:
+                frame = self.picam2.capture_array()
+                if frame is not None:
+                    return True, frame
+                else:
+                    logging_default.warning("Pi Camera 2 returned None Frame!")
+                    return False, None
+            except Exception as e:
+                logging_default.error(f"Error capturing frame image from Pi Camera 2: {e}")
         elif self.cap:
-            return self.cap.read()
+            ret, frame = self.cap.read()
+            if ret and frame is not None:
+                return True, frame
+            else:
+                logging_default.warning("cv2.VideoCapture returned None Frame!")
         else:
+            logging_default.error("No Camera available!")
             return False, None
 
     def release(self):
