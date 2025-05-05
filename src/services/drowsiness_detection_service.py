@@ -1,4 +1,5 @@
 import cv2
+import time
 from src.hardware.camera import Camera
 from src.lib.drowsiness_detection import DrowsinessDetection
 from src.lib.pose_detection import PoseDetection
@@ -8,7 +9,8 @@ from src.utils.drawing_utils import (
     draw_eye_landmarks,
     draw_mouth_landmarks,
     draw_hand_landmarks,
-    draw_head_pose_direction
+    draw_head_pose_direction,
+    draw_fps
 )
 
 # Initailize the hardware and the lib services
@@ -55,6 +57,7 @@ def generate_drowsiness_stream():
 
     The resulting frames are yielded as a stream for real-time display or transmission.
     """
+    pTime = time.time()
     while True:
         # Capture the video stream
         ret, frame = camera.get_capture()
@@ -157,7 +160,15 @@ def generate_drowsiness_stream():
         if hand_results.multi_hand_landmarks:
             hand_landmarks = pose_detector.extract_hand_landmarks(hand_results, image.shape[1], image.shape[0])
             draw_hand_landmarks(image, hand_landmarks)
-            
+        
+        # Drawing FPS Calculation
+        cTime = time.time()
+        fps = 1 / (cTime - pTime)
+        pTime = cTime
+        fpsText = f"FPS : {fps:.2f}"
+        draw_fps(image, fpsText)
+
+
         # Encode the frame as JPEG
         success, buffer = cv2.imencode('.jpg', image)
         if not success:
