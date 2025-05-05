@@ -82,7 +82,28 @@ deactivate
 ```
 
 ### Installing Environment through Virtual Env (Linux)
-In Progress
+First go do the work directory. 
+```bash
+cd drowsiness-detection
+```
+
+Then after that, we can create our virtual environment under `drowsiness-detection/venv` with the following command
+```bash
+python3 -m venv venv
+```
+
+You will see now a folder named `venv` will be created in your work directory. Now that we have a virtual environment been created, we now need to activate it.
+
+```bash
+source venv\bin\activate
+```
+
+You can see the virtual environment has been activated by seeing the (venv) in your terminal. After you activate the virtual environment, you can add packages to it using `pip`. You can also create a description of your dependencies using `pip`. In this repo, I have made it the packages that required in order to run this app, so simply just install them with this following command
+
+```bash
+pip install -r requirements.txt
+```
+
 
 ## How to run the lints
 I hope you read this, to make sure that this project is clean, as really Python never enforce any typing rules whatsoever, I really want this code project to have the same rules as other, that's why lints are used. This project use [Ruff](https://docs.astral.sh/ruff/) for the linters, and it really easy to use them. The rules can be found in the `.ruff.toml`.
