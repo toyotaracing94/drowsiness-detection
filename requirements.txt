@@ -1,9 +1,9 @@
-dlib==19.24.8
-Flask==3.1.0
-imutils==0.5.4
+fastapi==0.115.12
 mediapipe==0.10.21
 ngrok==1.4.0
 numpy==2.2.5
-opencv_contrib_python==4.8.1.78
+opencv_contrib_python==4.11.0.86
+picamera2==0.3.25
 Requests==2.32.3
+setuptools_scm==8.3.1
 websockets==15.0.1
