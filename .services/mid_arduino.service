@@ -1,0 +1,17 @@
+[Unit]
+Description=Backend Middleware Arduino
+After=network.target
+#W ants=ase.service
+
+[Service]
+User=root
+Group=root
+Type=simple
+# EnvironmentFile=/srv/www/environment
+# Environment="FLASK_DEBUG=0"
+ExecStart=/usr/bin/python3 /home/teamD/finalProjects/middleware_arduino/Sending_data_from_arduino.py
+# WorkingDirectory=/home/teamD/finalProjects/Camera-Khesa/src/
+# Restart=always
+
+[Install]
+WantedBy=multi-user.target

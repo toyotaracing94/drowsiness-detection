@@ -1,0 +1,6 @@
+fastapi==0.115.12
+numpy==1.26.4
+mediapipe==0.10.21
+setuptools_scm==8.3.1
+websockets==15.0.1
+uvicorn==0.34.2

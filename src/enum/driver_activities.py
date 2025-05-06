@@ -1,0 +1,7 @@
+from enum import Enum
+
+class DriverActivities(Enum):
+    ALERT_DRIVER_DROWSINESS = 0,
+    ALERT_DRIVER_YAWNING = 1,
+    ALERT_DRIVER_MAKE_PHONE_CALL_WHILE_DRIVING = 2,
+    ALERT_DISTRACTED = 3
