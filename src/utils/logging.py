@@ -2,6 +2,7 @@ import logging
 import os
 from datetime import datetime
 
+
 def create_logger(log_filepath:str, formatter, logger_name:str=None):
     if not os.path.exists(os.path.dirname(log_filepath)):
         os.makedirs(os.path.dirname(log_filepath))

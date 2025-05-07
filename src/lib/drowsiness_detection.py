@@ -3,18 +3,21 @@ import math
 
 import cv2
 import numpy as np
-from mediapipe.python.solutions import face_mesh
 
+from src.models.factory_model import get_face_model
 from src.utils.logging import logging_default
 
 
 class DrowsinessDetection():
-    def __init__(self, detection_settings_path: str):
+    def __init__(self, model_settings_path : str, model_path: str = None):
         
-        # Load configurations first 
-        self.load_configuration(detection_settings_path)
+        # Get the model
+        self.model = get_face_model(model_settings_path, model_path)
 
-        # Landmarks
+        # Load Configurations
+        self.load_configuration(model_settings_path)
+
+        # Landmarks (Hardcoded for now)
         self.left_eye_landmarks = [33, 160, 158, 133, 153, 144]
         self.right_eye_landmarks = [362, 385, 387, 263, 373, 380]
         self.mouth_landmarks =  [61, 39, 0, 269, 291, 405, 17, 181]
@@ -23,16 +26,6 @@ class DrowsinessDetection():
         # Counter for the Yawn and Drowsiness
         self.drowsiness_frame_counter = 0
         self.yawn_frame_counter = 0
-
-        # Face Mesh Model
-        self.face_mesh = face_mesh.FaceMesh(
-            static_image_mode=False,
-            max_num_faces=self.max_number_face_detection,
-            refine_landmarks=True,
-            min_detection_confidence = self.min_detection_confidence,
-            min_tracking_confidence = self.min_tracking_confidence
-        )
-        
 
     def load_configuration(self, path : str) -> None:
         """
@@ -44,7 +37,7 @@ class DrowsinessDetection():
             Path to the configuration file containing threshold values for EAR, MAR, and etc.
 
         """
-        logging_default.info("Loading drowsiness detection configs and model configuration")
+        logging_default.info(f"Loading drowsiness detection configs and model configuration from {path}")
         
         with open(path, 'r') as f:
             config = json.load(f)
@@ -53,18 +46,12 @@ class DrowsinessDetection():
         self.ear_consec_frames = config["eye_aspect_ratio_consec_frames"]
         self.mouth_aspect_ratio_threshold = config["mouth_aspect_ration_threshold"]
         self.mouth_aspect_ratio_consec_frames = config["mouth_aspect_ration_consec_frames"]
-        self.static_image_mode = config["static_image_mode"]
-        self.refine_landmarks = config["refine_landmarks"]
-        self.max_number_face_detection = config["max_number_face_detection"]
-        self.min_tracking_confidence = config["min_tracking_confidence"]
-        self.min_detection_confidence = config["min_detection_confidence"]
 
         logging_default.info(
             "Loaded config - EAR: %.2f, EAR Frames: %d, MAR: %.2f, MAR Frames: %d",
             self.ear_ratio, self.ear_consec_frames, self.mouth_aspect_ratio_threshold, self.mouth_aspect_ratio_consec_frames
         )
         return
-
 
     def detect_landmarks(self, image: np.ndarray) -> list:
         """
@@ -82,8 +69,8 @@ class DrowsinessDetection():
             multi_face_landmarks depends on the maximum face detection configuration
             set in the first place
         """
-        rgb_image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-        results = self.face_mesh.process(rgb_image)
+        processed_image = self.model.preprocess(image)
+        results = self.model.inference(processed_image)
         return results
 
     def extract_mouth_landmarks(self, face_landmarks, frame_width = 640, frame_height = 480) -> list[tuple[int, int]]:

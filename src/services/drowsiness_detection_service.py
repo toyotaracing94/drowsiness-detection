@@ -1,23 +1,28 @@
-import cv2
 import time
+
+import cv2
+
 from src.hardware.camera import Camera
 from src.lib.drowsiness_detection import DrowsinessDetection
-from src.lib.pose_detection import PoseDetection
+from src.lib.hands_detection import HandsDetection
+from src.lib.phone_detection import PhoneDetection
 from src.lib.socket_trigger import SocketTrigger
-
 from src.utils.drawing_utils import (
     draw_eye_landmarks,
-    draw_mouth_landmarks,
+    draw_fps,
     draw_hand_landmarks,
     draw_head_pose_direction,
-    draw_fps
+    draw_mouth_landmarks,
 )
 
-# Initailize the hardware and the lib services
+# Initialize the hardware and the lib services
 camera = Camera()
 socket_trigger = SocketTrigger("config/api_settings.json")
+
+# Initialize the feature detection
 drowsiness_detector = DrowsinessDetection("config/drowsiness_detection_settings.json")
-pose_detector = PoseDetection("config/pose_detection_settings.json")
+phone_detection = PhoneDetection("config/pose_detection_settings.json")
+hand_detector = HandsDetection("config/pose_detection_settings.json")
 
 def generate_original_capture_stream():
     """
@@ -57,7 +62,7 @@ def generate_drowsiness_stream():
 
     The resulting frames are yielded as a stream for real-time display or transmission.
     """
-    pTime = time.time()
+    p_time = time.time()
     while True:
         # Capture the video stream
         ret, frame = camera.get_capture()
@@ -71,12 +76,12 @@ def generate_drowsiness_stream():
         # Get the Multi-Face Mesh Landmarks (486 points)
         face_landmarks = drowsiness_detector.detect_landmarks(frame)
         # Find hand landmarks
-        hand_results = pose_detector.detect_hand_landmarks(frame)
+        hand_results = hand_detector.detect_hand_landmarks(frame)
         # Get the body-pose
-        body_pose = pose_detector.detect_body_pose(frame)
+        body_pose = phone_detection.detect_body_pose(frame)
 
         # Phone usage feature get from pose information
-        is_calling, dist = pose_detector.detect_phone_usage(
+        is_calling, dist = phone_detection.detect_phone_usage(
             body_pose,
             frame_width=frame.shape[1],
             frame_height=frame.shape[0]
@@ -158,15 +163,15 @@ def generate_drowsiness_stream():
 
         # Draw hand landmarks
         if hand_results.multi_hand_landmarks:
-            hand_landmarks = pose_detector.extract_hand_landmarks(hand_results, image.shape[1], image.shape[0])
+            hand_landmarks = hand_detector.extract_hand_landmarks(hand_results, image.shape[1], image.shape[0])
             draw_hand_landmarks(image, hand_landmarks)
         
         # Drawing FPS Calculation
-        cTime = time.time()
-        fps = 1 / (cTime - pTime)
-        pTime = cTime
-        fpsText = f"FPS : {fps:.2f}"
-        draw_fps(image, fpsText)
+        c_time = time.time()
+        fps = 1 / (c_time - p_time)
+        p_time = c_time
+        fps_text = f"FPS : {fps:.2f}"
+        draw_fps(image, fps_text)
 
 
         # Encode the frame as JPEG
