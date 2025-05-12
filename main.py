@@ -1,4 +1,3 @@
-import cv2
 from fastapi import FastAPI
 
 from src.routers import video_stream

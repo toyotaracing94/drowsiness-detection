@@ -1,5 +1,6 @@
 from enum import Enum
 
+
 class DriverActivities(Enum):
     ALERT_DRIVER_DROWSINESS = 0,
     ALERT_DRIVER_YAWNING = 1,

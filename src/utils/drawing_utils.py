@@ -32,8 +32,8 @@ def draw_hand_landmarks(image, hand_landmarks, color=(0, 255, 255)):
 
 def draw_head_pose_direction(image, face_landmark, x_angle, y_angle, color=(255, 0, 0)):
     p1 = (
-        int(face_landmark.landmark[1].x * image.shape[1]),
-        int(face_landmark.landmark[1].y * image.shape[0])
+        int(face_landmark[1][0] * image.shape[1]),
+        int(face_landmark[1][1] * image.shape[0])
     )
     p2 = (int(p1[0] + y_angle * 10), int(p1[1] - x_angle * 10))
     cv2.line(image, p1, p2, color, 3)

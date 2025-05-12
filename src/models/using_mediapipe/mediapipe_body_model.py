@@ -51,6 +51,9 @@ class MediapipeBodyPoseModel(BaseModelInference):
         return
 
     def load_model(self, model_path : str):
+        """
+        This function is to load the model of the Mediapipe body model to the class. 
+        """
         self.body_pose = pose.Pose(
             self.static_image_mode,
             1,
@@ -73,6 +76,42 @@ class MediapipeBodyPoseModel(BaseModelInference):
         """
         return cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
     
-    def inference(self, image : cv2.Mat):
+    def inference(self, image, preprocessed = True):
+        """
+        Perform the inference, extract the relevant body pose landmarks, 
+        and return them as a list of tuples.
+
+        Parameters
+        ----------
+        image : np.ndarray
+            The input image to process.
+        preprocessed : bool, optional
+            If True, the image is already preprocessed; otherwise, preprocessing will be done here.
+
+        Returns
+        -------
+        list
+            A list of body landmarks, where each landmark contains the (x, y, z) coordinates.
+            To use them, simply loop over the list and access the coordinates.
+
+            Example:
+            ```
+                [
+                    (0.574, 0.216, 0.012),  # Landmark 0 (right shoulder)
+                    (0.596, 0.312, 0.011),  # Landmark 1 (right elbow)
+                    (0.621, 0.398, 0.013),  # Landmark 2 (right wrist)
+                    # Other landmarks...
+                ]
+            ```
+        """
+        if not preprocessed:
+            image = self.preprocess(image)
+            
         inference_result = self.body_pose.process(image)
-        return inference_result
+
+        body_landmarks = []
+        if inference_result.pose_landmarks:
+            body_landmarks = [
+                (lm.x, lm.y, lm.z) for lm in inference_result.pose_landmarks.landmark
+            ]
+        return body_landmarks

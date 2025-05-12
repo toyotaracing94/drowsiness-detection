@@ -1,7 +1,9 @@
 import unittest
+
 import cv2
 
 from src.lib.drowsiness_detection import DrowsinessDetection
+
 
 class DrowsinessTest(unittest.TestCase):
     def setUp(self):
@@ -16,13 +18,13 @@ class DrowsinessTest(unittest.TestCase):
         """
         frame = cv2.imread("test/test_resources/drowsy_full_both_eye_closes.jpeg")
         # Detect face landmarks
-        face_landmarks = self.drowsiness_detector.detect_landmarks(frame)
+        face_landmarks = self.drowsiness_detector.detect_face_landmarks(frame)
         
         # Check if faces are detected (multi_face_landmarks is not empty)
-        if face_landmarks.multi_face_landmarks:
-            for face_landmark in face_landmarks.multi_face_landmarks:
+        if face_landmarks:
+            for face_landmark in face_landmarks:
                 # Get the left-eye and right-eye landmark
-                left_eye_landmark, right_eye_landmark = self.drowsiness_detector.extract_eye_landmarks(face_landmark, frame.shape[1], frame.shape[0])
+                left_eye_landmark, right_eye_landmark = self.drowsiness_detector.extract_eye_landmark(face_landmark, frame.shape[1], frame.shape[0])
                 
                 # Calculate the EAR Ratio to check drowsiness
                 left_ear = self.drowsiness_detector.calculate_ear(left_eye_landmark)
@@ -42,13 +44,13 @@ class DrowsinessTest(unittest.TestCase):
         """
         frame = cv2.imread("test/test_resources/driver_yawning.jpg")
         # Detect face landmarks
-        face_landmarks = self.drowsiness_detector.detect_landmarks(frame)
+        face_landmarks = self.drowsiness_detector.detect_face_landmarks(frame)
 
         # Check if faces are detected (multi_face_landmarks is not empty)
-        if face_landmarks.multi_face_landmarks:
-            for face_landmark in face_landmarks.multi_face_landmarks:
+        if face_landmarks:
+            for face_landmark in face_landmarks:
                 # Get the mouth landmark
-                mouth_eye_landmark = self.drowsiness_detector.extract_mouth_landmarks(face_landmark,frame.shape[1], frame.shape[0])
+                mouth_eye_landmark = self.drowsiness_detector.extract_mouth_landmark(face_landmark,frame.shape[1], frame.shape[0])
                 
                 # Calculate the MAR Ratio to check yawning
                 mar = self.drowsiness_detector.calculate_mar(mouth_eye_landmark)

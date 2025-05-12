@@ -51,6 +51,9 @@ class MediapipeFaceMeshModel(BaseModelInference):
         return
     
     def load_model(self, model_path : str):
+        """
+        This function is to load the model of the Mediapipe face model to the class. 
+        """
         self.face_mesh = face_mesh.FaceMesh(
             static_image_mode=False,
             max_num_faces=self.max_number_face_detection,
@@ -71,6 +74,47 @@ class MediapipeFaceMeshModel(BaseModelInference):
         """
         return cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
-    def inference(self, image : cv2.Mat):
+    def inference(self, image, preprocessed = True):
+        """
+        Perform the inference, extract the relevant face mesh result landmakrs,
+        and return them as a list of tuples match with the according of maximum number faces detected configuration
+
+        Parameters
+        ----------
+        image : np.ndarray
+            The input image to process.
+        preprocessed : bool, optional
+            If True, the image is already preprocessed; otherwise, preprocessing will be done here.
+
+        Returns
+        ----------
+        list
+            A list of the face mesh landmarks, where if its detected in one frame have more than face, it will return an array of face mesh landmark.
+            Each landmark of the body contains the (x, y, z). To use them simply loop of the list then accessing them with index
+
+            Example:
+            ```
+            [
+                [  # Coordinates for Face 1
+                    (x1, y1, z1), (x2, y2, z2), ..., (x486, y486, z486)  # All 486 landmarks
+                ],
+                [  # Coordinates for Face 2
+                    (x1, y1, z1), (x2, y2, z2), ..., (x486, y486, z486)  # All 486 landmarks
+                ]
+            ]
+            ```
+        """
+        if not preprocessed:
+            image = self.preprocess(image)
+
         inference_result = self.face_mesh.process(image)
-        return inference_result
+
+        faces_coordinates = []
+        if inference_result.multi_face_landmarks:
+            for face_landmarks in inference_result.multi_face_landmarks:
+                face_coordinates = [
+                    (lm.x, lm.y, lm.z) for lm in face_landmarks.landmark
+                ]
+                faces_coordinates.append(face_coordinates)
+
+        return faces_coordinates

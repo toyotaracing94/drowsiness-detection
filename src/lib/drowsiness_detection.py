@@ -21,7 +21,7 @@ class DrowsinessDetection():
         self.left_eye_landmarks = [33, 160, 158, 133, 153, 144]
         self.right_eye_landmarks = [362, 385, 387, 263, 373, 380]
         self.mouth_landmarks =  [61, 39, 0, 269, 291, 405, 17, 181]
-        self.pose_landmarks = [1, 33, 61, 199, 263, 291]
+        self.head_pose_landmarks = [1, 33, 61, 199, 263, 291]
 
         # Counter for the Yawn and Drowsiness
         self.drowsiness_frame_counter = 0
@@ -53,7 +53,7 @@ class DrowsinessDetection():
         )
         return
 
-    def detect_landmarks(self, image: np.ndarray) -> list:
+    def detect_face_landmarks(self, image: np.ndarray) -> list:
         """
         This function is to process an RGB image and returns the face landmarks on each detected face.
 
@@ -64,92 +64,111 @@ class DrowsinessDetection():
 
         Return
         ----------
-        results :
-            A list of special tuple Class in Mediapipe where it will have 
-            multi_face_landmarks depends on the maximum face detection configuration
-            set in the first place
+        face_landmarks :
+            A list of lists of face landmark, where each inner list contains the landmarks of a detected face.
+            Each landmark contains the (x, y, z) coordinates. To access the coordinates, simply loop through 
+            the list and use item.x, item.y, or item.z with index array like item[0], item[1], item[2].
+
+            Example:
+            ```
+            [
+                [  # Coordinates for Face 1
+                    (x1, y1, z1), (x2, y2, z2), ..., (x486, y486, z486)  # All 486 landmarks
+                ],
+                [  # Coordinates for Face 2
+                    (x1, y1, z1), (x2, y2, z2), ..., (x486, y486, z486)  # All 486 landmarks
+                ]
+            ]
+            ```
         """
         processed_image = self.model.preprocess(image)
-        results = self.model.inference(processed_image)
-        return results
+        face_landmarks = self.model.inference(processed_image)
+        return face_landmarks
 
-    def extract_mouth_landmarks(self, face_landmarks, frame_width = 640, frame_height = 480) -> list[tuple[int, int]]:
+    def extract_mouth_landmark(self, face_landmark, frame_width : int = 640, frame_height : int = 480) -> list[tuple[int, int]]:
         """
-        Extract the pixel location of the mouth landmark from the given face landmark,
-        based on the choosen mouth landmark position index 
+        Extract the pixel location (x,y) of the selected mouth landmark position from the given a face landmark,
+        based on the choosen mouth landmark position index.
 
         Parameters
         ----------
-        face_landmarks : np.ndarray
-            The image frame of which want to get the face landmark
-        frame_width : 
-            The width of image frame
-        frame_width : 
-            The height of image frame
+        face_landmark : list of tuple(float, float, float)
+            A list of 3D landmarks (x, y, z) for a single detected face. Each landmark is a tuple of normalized coordinates.
+        frame_width : int, optional
+            The width of the image frame (default is 640).
+        frame_height : int, optional
+            The height of the image frame (default is 480).
 
         Return
         ----------
-        results :
-            The list of pixels(x,y) of the mouth landmark
+        list of tuple(int, int)
+            A list of (x, y) pixel positions corresponding to the selected mouth landmarks, scaled to the image size.
         """
         mouth_pixels = []
 
         for idx in self.mouth_landmarks:
-            landmark = face_landmarks.landmark[idx]
-            x = int(landmark.x * frame_width)  
-            y = int(landmark.y * frame_height)
+            landmark = face_landmark[idx]
+            x = int(landmark[0] * frame_width)  
+            y = int(landmark[1] * frame_height)
             mouth_pixels.append((x,y))
         
         return mouth_pixels
     
-    def extract_eye_landmarks(self, face_landmarks, frame_width = 640, frame_height = 480) -> tuple[list[tuple[int, int]], list[tuple[int, int]]]:
+    def extract_eye_landmark(self, face_landmark, frame_width : int = 640, frame_height : int = 480) -> tuple[list[tuple[int, int]], list[tuple[int, int]]]:
         """
-        Extract the pixel location of the left-eye landmark and right-eye landmark from the given face landmark,
+        Extract the pixel location (x,y) of the left-eye landmark and right-eye landmark from the given face landmark,
         based on the choosen left-eye landmark and right-eye landmark position index 
 
         Parameters
         ----------
-        face_landmarks : np.ndarray
-            The image frame of which want to get the face landmark
-        frame_width : 
-            The width of image frame
-        frame_width : 
-            The height of image frame
+        face_landmark : list of tuple(float, float, float)
+            A list of normalized (x, y, z) landmarks for a single detected face.
+        frame_width : int, optional
+            Width of the image frame in pixels (default is 640).
+        frame_height : int, optional
+            Height of the image frame in pixels (default is 480).
 
         Return
         ----------
-        results :
-            The tuple of list of pixels(x,y) of each left-eye landmark and right-eye landmark
+        tuple of list of tuple(int, int)
+            A tuple containing:
+            - A list of (x, y) pixel coordinates for left eye landmarks.
+            - A list of (x, y) pixel coordinates for right eye landmarks.
         """
         left_eye_pixels = []
         right_eye_pixels = []
 
         for idx in self.left_eye_landmarks:
-            landmark = face_landmarks.landmark[idx]
-            x = int(landmark.x * frame_width)
-            y = int(landmark.y * frame_height)
+            landmark = face_landmark[idx]
+            x = int(landmark[0] * frame_width)
+            y = int(landmark[1] * frame_height)
             left_eye_pixels.append((x, y))
 
         for idx in self.right_eye_landmarks:
-            landmark = face_landmarks.landmark[idx]
-            x = int(landmark.x * frame_width)
-            y = int(landmark.y * frame_height)
+            landmark = face_landmark[idx]
+            x = int(landmark[0] * frame_width)
+            y = int(landmark[1] * frame_height)
             right_eye_pixels.append((x, y))
         
         return (left_eye_pixels, right_eye_pixels)
     
-    def estimate_head_pose(self, image : np.ndarray, face_landmarks):
+    def estimate_head_pose(self, image : np.ndarray, face_landmark):
         """
         This function is to Estimate head pose (yaw, pitch, roll) from 
         6 points of face landmarks from Mediapipe by converting the image coordinates
         to the world coordinate using OpenCV SolvePnp.
 
-        <b>Note</b>: In my Opinion, the translation of the camera frame to the world frame coordinate
+        Notes
+        ---------
+        In my Opinion, the translation of the camera frame to the world frame coordinate
         is related the with inverse of Projection Matrix on the Camera Model. See this
         [reference](https://www.cs.cmu.edu/~16385/s17/Slides/11.1_Camera_matrix.pdf) and
-        this [reference](https://homepages.inf.ed.ac.uk/rbf/CVonline/LOCAL_COPIES/EPSRC_SSAZ/node3.html) 
+        this [reference](https://homepages.inf.ed.ac.uk/rbf/CVonline/LOCAL_COPIES/EPSRC_SSAZ/node3.html)
         
-        Code Reference = https://learnopencv.com/head-pose-estimation-using-opencv-and-dlib/
+        For background on camera matrices and pose estimation and some code reference, see:
+        - https://www.cs.cmu.edu/~16385/s17/Slides/11.1_Camera_matrix.pdf
+        - https://homepages.inf.ed.ac.uk/rbf/CVonline/LOCAL_COPIES/EPSRC_SSAZ/node3.html
+        - https://learnopencv.com/head-pose-estimation-using-opencv-and-dlib/
         
         Parameters
         ----------
@@ -157,36 +176,39 @@ class DrowsinessDetection():
             The image frame of which want to get the face landmark
 
         face : 
-            The list of 3D(x,y,z) of an estimate position of face landmarks
+            A list of 3D normalized coordinates (x, y, z) for a single face's landmarks.
 
         Return
         ----------
-        results :
-            The angle estimation of the head in form of Roll(φ), Pitch(θ), Yaw(ψ)
+        tuple of float
+            A tuple containing estimated head pose angles in degrees:
+            - Roll(φ) (rotation around z-axis)
+            - Pitch(θ) (rotation around x-axis)
+            - Yaw(ψ) (rotation around y-axis)
         """
-        face_3d = []
         face_2d = []
+        face_3d = []
         img_h, img_w, _ = image.shape
 
         # Extract 3D and 2D landmarks for pose estimation
-        for idx in self.pose_landmarks:
-            lm = face_landmarks.landmark[idx]
-            x, y = int(lm.x * img_w), int(lm.y * img_h)
+        for idx in self.head_pose_landmarks:
+            lm = face_landmark[idx]
+            x, y = int(lm[0] * img_w), int(lm[1] * img_h)
 
             # 2D Coordinates
             face_2d.append([x, y])
 
             # 3D Coordinates (using the Z value)
-            face_3d.append([x, y, lm.z])
+            face_3d.append([x, y, lm[2]])
 
         face_2d = np.array(face_2d, dtype=np.float64)
         face_3d = np.array(face_3d, dtype=np.float64)
 
         # Camera matrix
         focal_length = 1 * img_w
-        cam_matrix = np.array([[focal_length, 0, img_w / 2],
-                               [0, focal_length, img_h / 2],
-                               [0, 0, 1]])
+        cam_matrix = np.array([[focal_length, 0             , img_w / 2],
+                               [0           , focal_length  , img_h / 2],
+                               [0           , 0             , 1        ]])
 
         dist_matrix = np.zeros((4, 1), dtype=np.float64)
 
@@ -260,23 +282,6 @@ class DrowsinessDetection():
         mar = (a + b + c) / (2.0 * d)
         return mar
 
-    def euclidean_distance(self, point1 : list, point2 : list):
-        """
-        Calculate the absolute distance (euclidian distance) between two points pixel in single planar
-
-        Parameters
-        ----------
-        point1 : list
-            The first point of feature
-        point2 : list
-            The second point of feature
-
-        Return
-        ----------
-            The absolute distance between two points of the pixel in the image planar
-        """
-        return math.sqrt((point1[0] - point2[0]) ** 2 + (point1[1] - point2[1]) ** 2)
-
     def check_ear_below_threshold(self, ear: float) -> bool:
         """
         Check if the EAR is below the threshold, indicating possible drowsiness.
@@ -292,6 +297,22 @@ class DrowsinessDetection():
             True if EAR is below the threshold, indicating potential drowsiness, False otherwise.
         """
         return ear < self.ear_ratio
+
+    def check_mar_exceed_threshold(self, mar: float) -> bool:
+        """
+        Check if the MAR is exceed the threshold, indicating possible Yawning.
+
+        Parameters
+        ----------
+        mar : float
+            The MAR value
+
+        Return
+        ----------
+        bool : 
+            True if MAR is exceed the threshold, indicating potential yawning, False otherwise.
+        """
+        return mar > self.mouth_aspect_ratio_threshold
 
     def check_drowsiness(self, ear : float) -> bool:
         """
@@ -315,22 +336,6 @@ class DrowsinessDetection():
             self.drowsiness_frame_counter = 0
         return False
     
-    def check_mar_exceed_threshold(self, mar: float) -> bool:
-        """
-        Check if the MAR is exceed the threshold, indicating possible Yawning.
-
-        Parameters
-        ----------
-        mar : float
-            The MAR value
-
-        Return
-        ----------
-        bool : 
-            True if MAR is exceed the threshold, indicating potential yawning, False otherwise.
-        """
-        return mar > self.mouth_aspect_ratio_threshold
-    
     def check_yawning(self, mar : float) -> bool:
         """
         Function to check the yawness based on the MAR value. The current default MAR
@@ -352,3 +357,20 @@ class DrowsinessDetection():
         else:
             self.yawn_frame_counter = 0
         return False
+
+    def euclidean_distance(self, point1 : list, point2 : list):
+            """
+            Calculate the absolute distance (euclidian distance) between two points pixel in single planar
+
+            Parameters
+            ----------
+            point1 : list
+                The first point of feature
+            point2 : list
+                The second point of feature
+
+            Return
+            ----------
+                The absolute distance between two points of the pixel in the image planar
+            """
+            return math.sqrt((point1[0] - point2[0]) ** 2 + (point1[1] - point2[1]) ** 2)

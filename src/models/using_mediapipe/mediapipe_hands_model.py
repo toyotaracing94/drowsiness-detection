@@ -63,6 +63,51 @@ class MediapipeHandsModel(BaseModelInference):
         """
         return cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
     
-    def inference(self, image : cv2.Mat):
+    def inference(self, image : cv2.Mat, preprocessed = True):
+        """
+        Perform inference using the MediaPipe Hands model, extract the relevant hand landmarks,
+        and return them as a list of tuples.
+
+        Parameters
+        ----------
+        image : cv2.Mat
+            The input image to process.
+
+        Returns
+        -------
+        list
+            A list of lists of hand landmarks, where each inner list contains landmarks of one hand.
+            Each landmark contains the (x, y, z) coordinates. To use them, simply loop over the list 
+            and access the coordinates.
+
+            Example:
+            ```
+                [
+                    [
+                        (0.574, 0.216, 0.012),  # Landmark 0 (wrist)
+                        (0.596, 0.312, 0.011),  # Landmark 1 (thumb base)
+                        (0.621, 0.398, 0.013),  # Landmark 2 (thumb tip)
+                        # Other landmarks...
+                    ],  # First hand (e.g., left hand)
+                    
+                    [
+                        (0.486, 0.239, 0.014),  # Landmark 0 (wrist)
+                        (0.505, 0.297, 0.018),  # Landmark 1 (thumb base)
+                        (0.523, 0.349, 0.016),  # Landmark 2 (thumb tip)
+                        # Other landmarks...
+                    ]  # Second hand (e.g., right hand)
+                ]
+            ```
+        """
+        if not preprocessed:
+            image = self.preprocess(image)
         inference_result = self.hands_pose.process(image)
-        return inference_result
+        
+        hand_landmarks = []
+        if inference_result.multi_hand_landmarks:
+            for hand_landmark in inference_result.multi_hand_landmarks:
+                hand_landmarks.append([
+                    (lm.x, lm.y, lm.z) for lm in hand_landmark.landmark
+                ])
+
+        return hand_landmarks

@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 from fastapi.responses import StreamingResponse
 
-from src.services.drowsiness_detection_service import (
+from src.controller.drowsiness_controller import (
     generate_drowsiness_stream,
     generate_original_capture_stream,
 )
