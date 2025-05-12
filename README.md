@@ -41,10 +41,10 @@ As this project is still under development, I can say that this structure can be
 ## Installing Environment 
 I think that installing python packages in secluded environment was simple can be used using the Python own official virtual environment. To do this, first you must have to install python first. This app using this spesification
 
-1. Python 3.11 version
+1. Python 3.10 version
 2. Mediapipe 0.10.21 version
 
-So for python, you can search for their installer [here](https://www.python.org/downloads/release/python-31112/) and install them. If you have installed them, we can start the virtual environment creation. Of course you can try to install another python version, but keep in mind, I made this project in 3.11 so it can be more stable rather the new python version. if you decided to use another python version, do mind that the `requirements.txt` that I have prepared for you will be conflict, you can one-by-one install the package that I list on that `requirements.txt`. I will explain how you can set up the environment in both Windows and Linux for the Raspberry Pi, but keep in mind Windows version, this code probably will favor more on the Linux side, but it's a good idea to be able to run this on Windows aswell. So, before doing the environement set-up, please kindly clone this repo 
+So for python, you can search for their installer [here](https://www.python.org/downloads/release/python-31011/) and install them. If you have installed them, we can start the virtual environment creation. Of course you can try to install another python version, but keep in mind, I made this project in 3.10 so it can be more stable rather the new python version and currently if using Hailo AI Accelerator, most of their compiler and program running max on Python 3.10 version, so it is recommended that you use Python 3.10 version both on Windows and Linux just for best practices. If you decided to use another python version, do mind that the `requirements.txt` that I have prepared for you will be conflict, you can one-by-one install the package that I list on that `requirements.txt`. I will explain how you can set up the environment in both Windows and Linux for the Raspberry Pi, but keep in mind Windows version, this code probably will favor more on the Linux side, but it's a good idea to be able to run this on Windows aswell. So, before doing the environement set-up, please kindly clone this repo 
 
 ### Installing environment through Virtual Env (Windows)
 First go do the work directory. 
@@ -52,14 +52,14 @@ First go do the work directory.
 cd drowsiness-detection
 ```
 
-Then after that, if your Python base already in 3.11 version, we can directly create our virtual environment under `drowsiness-detection/venv` with the following command
+Then after that, if your Python base already in 3.10 version, we can directly create our virtual environment under `drowsiness-detection/venv` with the following command
 ```bash
 python -m venv venv
 ```
 
 But if your machine have multiple python version, you can do this
 ```bash
-py -3.11 -m venv venv
+py -3.10 -m venv venv
 ```
 
 
@@ -88,9 +88,24 @@ deactivate
 ```
 
 ### Installing Environment through Virtual Env (Linux)
-For running this on Linux Raspberry Pi, there steps is similar when we set up on Windows. First go do the work directory after clone the repository. 
+For running this on Linux Raspberry Pi, the steps are similar when we set up on Windows. First, go to the work directory after clone the repository. 
 ```bash
 cd drowsiness-detection
+```
+
+Before creating the virtual environment, I want to make sure first that we have the Python 3.10 version. I know that managing multiple Python in Linux system is hard, so I recommend installing `pyenv` for that. You can see the tutorial for installing `pyenv` in their github [here](https://github.com/pyenv/pyenv) or [this](https://realpython.com/intro-to-pyenv/) tutorial online. After you successfully install pyenv, install the current Python version we want (in this case 3.10.11), simply by using pyenv like this on terminal
+```bash
+pyenv install -v 3.10.11
+```
+
+So after successfull Python version installation, we can switch to the Python 3.10 version simply doing this using pyenv
+```bash
+pyenv global 3.10.11
+```
+
+And there we go, if your machine from start doesn't use the spesific Python version needed. You can make sure of the Python version active by this command
+```bash
+python3 --version
 ```
 
 Then, because we decided to make this project inside the Virtual Environment using the Python Virtual Environment, this is a crucial step so the venv can recognize our Pi Camera. This issue has been reported [here](https://forums.raspberrypi.com/viewtopic.php?t=361758). Conda also suffer the biggest from all of this than any other environment package. So, we gonna make this using a simple virtual environment. First make sure to install the package first from the apt package
