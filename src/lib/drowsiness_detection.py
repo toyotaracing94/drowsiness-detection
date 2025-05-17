@@ -9,10 +9,10 @@ from src.utils.logging import logging_default
 
 
 class DrowsinessDetection():
-    def __init__(self, model_settings_path : str, model_path: str = None):
+    def __init__(self, model_settings_path : str):
         
         # Get the model
-        self.model = get_face_model(model_settings_path, model_path)
+        self.model = get_face_model(model_settings_path)
 
         # Load Configurations
         self.load_configuration(model_settings_path)
