@@ -78,17 +78,21 @@ class BlazeFacePipeline(BaseModelInference):
             image = self.preprocess(image)
 
         img1, scale1, pad1 = self.blaze_face_detector.resize_pad(image)
-        
-        normalized_detections = self.blaze_face_detector.process(img1)
+        normalized_detections = self.blaze_face_detector.process(img1, False)
 
+        faces_coordinates = []
         if len(normalized_detections) > 0:
             detections = self.blaze_face_detector.denormalize_detections(normalized_detections,scale1,pad1)
             xc, yc, scale, theta = self.blaze_face_detector.detection2roi(detections)
 
             roi_img, roi_affine, roi_box = self.blaze_face_landmark.extract_roi(image, xc, yc, theta, scale)
-            flags, normalized_landmarks = self.blaze_face_landmark.process(roi_img)
+            flags, normalized_landmarks = self.blaze_face_landmark.process(roi_img, False)
 
-            landmarks = self.blaze_face_landmark.denormalize_landmarks(normalized_landmarks, roi_affine)
-            return landmarks
-        
-        return []
+            landmarks = self.blaze_face_landmark.denormalize_landmarks(normalized_landmarks.copy(), roi_affine.copy())
+            original_normalized_landmarks = self.blaze_face_landmark.normalized_landmark_to_orginal_image_space(landmarks.copy(), image.shape)
+
+            for face_landmark in original_normalized_landmarks:
+                face_coords = [tuple(pt) for pt in face_landmark]
+                faces_coordinates.append(face_coords)
+            
+        return faces_coordinates

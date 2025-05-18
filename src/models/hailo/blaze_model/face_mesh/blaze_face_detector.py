@@ -96,12 +96,13 @@ class BlazeFaceDetector(BlazeDetectorBase):
             Array of filtered face detections, shape depends on number of detections.
             If no detections are found, returns an empty list.
         """
-        if not preprocessed:
-            image = self.preprocess(image)
         
         # Convert img.unsqueeze(0) to NumPy equivalent
         img_expanded = np.expand_dims(image, axis=0)
 
+        if not preprocessed:
+            img_expanded = self.preprocess(img_expanded)
+        
         # Preprocess the images into tensors:
         image_tensor = self.preprocess(img_expanded)
 
@@ -130,15 +131,15 @@ class BlazeFaceDetector(BlazeDetectorBase):
             where N is the number of detected faces.
         """
         # Run the neural network using Hailo
-        outputs = self.engine.run_all(image_tensor)
+        outputs = self.engine.run_all(image_tensor, self.hef_id)
 
         # The output will give us something like this
         #   Output face_detection_full_range/conv49 UINT8, FCR(48x48x16)
         #   Output face_detection_full_range/conv48 UINT8, FCR(48x48x1)
         # And we dont want that
 
-        output1 = outputs[0]
-        output2 = outputs[1]
+        output1 = outputs[self.output_vstream_infos[0].name]
+        output2 = outputs[self.output_vstream_infos[1].name]
 
         # Reshape to match what mediapipe postprocess expects from hailo
         out1 = output2.reshape(1, 2304, 1).astype(np.float32)

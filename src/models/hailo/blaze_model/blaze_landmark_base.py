@@ -94,7 +94,7 @@ class BlazeLandmarkBase():
         Parameters
         ----------
         landmarks : np.ndarray
-            Normalized landmark coordinates of shape (N, K, 3), where K is number of landmarks.
+            Normalized landmark coordinates of shape (N, K, 3) from ROI image, where K is number of landmarks.
         affines : np.ndarray
             Affine matrices used during ROI extraction of shape (N, 2, 3).
 
@@ -109,3 +109,28 @@ class BlazeLandmarkBase():
             landmark = (affine[:,:2] @ landmark[:,:2].T + affine[:,2:]).T
             landmarks[i,:,:2] = landmark
         return landmarks
+
+    def normalized_landmark_to_orginal_image_space(self, landmarks: np.ndarray, image_shape : np.ndarray) -> np.ndarray:
+        """
+        Normalized coordinate in original image space into a Mediapipe normalized output [0,1]
+        
+        Parameters
+        ----------
+        landmarks : np.ndarray
+            Denormalized landmark coordinates of shape (N, K, 3) original Image
+        image_shape : np.ndarray
+            The original image shapes
+
+        Returns
+        -------
+        normalized_landmarks : np.ndarray
+            Normalized landmakrs in original image space, same shape as the mediapipe output.
+        """
+        H, W = image_shape[:2]
+
+        normalized_landmarks = landmarks.copy()
+        for i in range(len(normalized_landmarks)):
+            normalized_landmarks[i, :, 0] /= W
+            normalized_landmarks[i, :, 1] /= H
+
+        return normalized_landmarks

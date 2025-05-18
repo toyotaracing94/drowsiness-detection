@@ -102,24 +102,20 @@ class BlazeFaceLandmark(BlazeLandmarkBase):
 
             # Preprocess the images into tensors:
             image_input = np.expand_dims(image[i,:,:,:], axis=0)
-            input_data = {self.input_vstream_infos[0].name: image_input}
-                               
+        
             # Run the neural network on Hailo
             """ Execute model on Hailo-8 """
-            outputs = self.engine.run_all(input_data)
+            outputs = self.engine.run_all(image_input, self.hef_id)
 
             # The output will give us something like this
-            #   Output face_detection_full_range/conv49 UINT8, FCR(48x48x16)
-            #   Output face_detection_full_range/conv48 UINT8, FCR(48x48x1)
+            #   Output face_landmark/conv23 UINT8, FCR(1x1x1)
+            #   Output face_landmark/conv25 UINT8, FCR(1x1x1x1404)
             # And we dont want that
 
-            output1 = outputs[0]
-            output2 = outputs[1]
+            output1 = outputs[self.output_vstream_infos[0].name]
+            output2 = outputs[self.output_vstream_infos[1].name]
 
             # Reshape to match what mediapipe postprocess expects from hailo
-            output1 = output2.reshape(1, 2304, 1).astype(np.float32)
-            output2 = output1.reshape(1, 2304, 16).astype(np.float32)
-
             output2 = output2.reshape(1,-1,3) # 1404 => [1,356,3]
             output2 = output2 / self.resolution                                      
 

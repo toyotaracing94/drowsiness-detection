@@ -30,7 +30,8 @@ class HailoInferenceEngine():
         self.network_group_params_list = []
         self.input_vstreams_params_list = []
         self.output_vstreams_params_list = []
-
+        self.input_vstream_info_list = []
+        self.output_vstream_info_list = []
     
     def load_model(self, hef_path : str):
         """
@@ -46,13 +47,15 @@ class HailoInferenceEngine():
         network_group = self._configure_and_get_network_group(hef, self.target)
         network_group_params = network_group.create_params()
         input_vstreams_params, output_vstreams_params = self._create_vstream_params(network_group)
-        _, self.output_vstream_info = self._get_and_print_vstream_info(hef)
+        self.input_vstream_info, self.output_vstream_info = self._get_and_print_vstream_info(hef)
         
         self.hef_list.append(hef)
         self.network_group_list.append(network_group)
         self.network_group_params_list.append(network_group_params)
         self.input_vstreams_params_list.append(input_vstreams_params)
         self.output_vstreams_params_list.append(output_vstreams_params)
+        self.input_vstream_info_list.append(self.input_vstream_info)
+        self.output_vstream_info_list.append(self.output_vstream_info)
 
         self.hef_cnt += 1
 
@@ -168,7 +171,7 @@ class HailoInferenceEngine():
 
         return output_l
     
-    def run_all(self, image : np.ndarray) -> List[np.ndarray]:
+    def run_all(self, image : np.ndarray, hef_id : int) -> List[np.ndarray]:
         """
         Run inference on Hailo-8 device.
 
@@ -180,11 +183,18 @@ class HailoInferenceEngine():
         Returns:
             numpy.ndarray: Inference output.
         """
-        output = None
-        with InferVStreams(self.network_group, self.input_vstreams_params, self.output_vstreams_params) as infer_pipeline:
-            input_data = {self.input_vstream_info[0].name: image}   # Assumes that the model has one input
+        network_group = self.network_group_list[hef_id]
+        network_group_params = self.network_group_params_list[hef_id]
+        input_vstreams_params = self.input_vstreams_params_list[hef_id]
+        output_vstreams_params = self.output_vstreams_params_list[hef_id]
+        input_vstream_info = self.input_vstream_info_list[hef_id]
+        output_vstream_info = self.output_vstream_info_list[hef_id]
 
-            with self.network_group.activate(self.network_group_params):
+        output = None
+        with InferVStreams(network_group, input_vstreams_params, output_vstreams_params) as infer_pipeline:
+            input_data = {input_vstream_info[0].name: image}   # Assumes that the model has one input
+
+            with network_group.activate(network_group_params):
                 output = infer_pipeline.infer(input_data)
 
         return output

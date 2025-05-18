@@ -22,8 +22,8 @@ class DrowsinessDetectionService:
         self.camera = Camera()
         self.socket_trigger = SocketTrigger("config/api_settings.json")
         self.drowsiness_detector = DrowsinessDetection("config/drowsiness_detection_settings.json")
-        self.phone_detection = PhoneDetection("config/pose_detection_settings.json")
-        self.hand_detector = HandsDetection("config/pose_detection_settings.json")
+        # self.phone_detection = PhoneDetection("config/pose_detection_settings.json")
+        # self.hand_detector = HandsDetection("config/pose_detection_settings.json")
         self.prev_time = time.time()
 
     def process_frame(self, frame : np.ndarray):
@@ -55,19 +55,19 @@ class DrowsinessDetectionService:
 
         # Get the landmarks for the face, body and hands
         face_landmarks = self.drowsiness_detector.detect_face_landmarks(frame)
-        hand_results = self.hand_detector.detect_hand_landmarks(frame)
-        body_pose = self.phone_detection.detect_body_pose(frame)
+        # hand_results = self.hand_detector.detect_hand_landmarks(frame)
+        # body_pose = self.phone_detection.detect_body_pose(frame)
 
         # Phone usage detection feature get from pose information
-        is_calling, distance = self.phone_detection.detect_phone_usage(
-            body_pose, frame.shape[1], frame.shape[0]
-        )
+        # is_calling, distance = self.phone_detection.detect_phone_usage(
+        #     body_pose, frame.shape[1], frame.shape[0]
+        # )
 
-        if is_calling:
-            cv2.putText(image, "Making a phone call", (50, 150), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+        # if is_calling:
+        #     cv2.putText(image, "Making a phone call", (50, 150), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
 
-        if distance is not None:
-            cv2.putText(image, f"Distance: {distance:.2f}", (20, frame.shape[0] - 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 0), 2)
+        # if distance is not None:
+        #     cv2.putText(image, f"Distance: {distance:.2f}", (20, frame.shape[0] - 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 0), 2)
 
         # Drowsiness and pose detection
         if face_landmarks:
@@ -117,9 +117,9 @@ class DrowsinessDetectionService:
                 if right_eye: draw_eye_landmarks(image, right_eye)
                 if mouth: draw_mouth_landmarks(image, mouth)
 
-        if hand_results:
-            hand_landmarks = self.hand_detector.extract_hand_landmark(hand_results, image.shape[1], image.shape[0])
-            draw_hand_landmarks(image, hand_landmarks)
+        # if hand_results:
+        #     hand_landmarks = self.hand_detector.extract_hand_landmark(hand_results, image.shape[1], image.shape[0])
+        #     draw_hand_landmarks(image, hand_landmarks)
 
         # FPS calculation
         current_time = time.time()
