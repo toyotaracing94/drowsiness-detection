@@ -6,7 +6,7 @@ This is repo for holding the code for the drowsiness detection project on on Toy
 </p>
 
 ## Project Tech Stack 
-This project use several Tech Stack, but most of them is using Python. As you an see, this project is a Real-Time face recognition to detect a drowsiness of an user that was captured by the camera. If running on Windows, it will use the default webcam current OS have, or if in linux, it will always -- always be in mind will be run on Raspberry Pi, especially in Raspberry Pi 5 with Raspberry Pi Camera with the video stream source. The project tech stack is mostly divided into 3 main core idea, the computer vision, the model, and the backend.
+This project use several Tech Stack, but most of them are using Python. As you an see, this project is a Real-Time face recognition to detect a drowsiness of an user that was captured by the camera. If running on Windows, it will use the default webcam current OS have, or if in linux, it will always -- always be in mind will be run on Raspberry Pi, especially in Raspberry Pi 5 with Raspberry Pi Camera as the video stream source. The project tech stack is mostly divided into 3 main core, the computer vision, the deep learning model, and the backend.
 
 Perhaps some of you will ask, why not just using OpenCV windows to see the result of the calculation? Well, I plan to run this on a headless GUI OS, so making it run using OpenCV windows will be quite useless (this is to save resources when running on Low-Spec hardware).
 
@@ -15,13 +15,13 @@ Perhaps some of you will ask, why not just using OpenCV windows to see the resul
 3. FastAPI
 
 ### Model
-The model we are using to detect the pose estimation is [Mediapipe.](https://github.com/google-ai-edge/mediapipe). It's easy to use, and cross-compatible and run pretty fast on x64 platfrom.
+The model we are using to detect the pose estimation is [Mediapipe](https://github.com/google-ai-edge/mediapipe). It's easy to use, and cross-compatible and run pretty fast on x64 platfrom.
 
 ### Computer Vision
 For the computer vision manipulation, we are using your old friend OpenCV. Really no question asked for this
 
 ### Backend
-At first, I want to expose the API using C# ASP .NET platform. But it semes that will make more work, that's why I used [FastAPI](https://fastapi.tiangolo.com/) where it was already in the same environment as the Model and Computer Vision. But maybe some of you will ask who already familiar with Flask, why not Flask or any other stuff? Well it's not like I hate flask, but I was searching a framework that already have OpenAPI built into them and FastAPI already meet that requirements.
+At first, I want to expose the API using C# ASP .NET platform. But it seems that doing this will just make more work, that's why I decided used [FastAPI](https://fastapi.tiangolo.com/) where it was already in the same environment as the Model and Computer Vision libraries. But maybe some of you will ask who already familiar with Flask, why not Flask or any other stuff? Well it's not like I hate flask, but I was searching a framework that already have OpenAPI built into them and FastAPI already meet that requirements.
 
 
 ## Project Structure
@@ -36,17 +36,17 @@ drowsiness-detection/
 ├── test/
 ```
 
-As this project is still under development, I can say that this structure can be contested to be more flexible, as I really don't have experience building in a Python environment, and I don't really find a good project in github that really adheres OOP in Python, this will do for now.
+As this project is still under development, I can say that this structure can be contested for change to be more flexible, as I really don't have experience building in a Python environment, and I don't really find a good project in github that really adheres OOP in Python, this will do for now.
 
 ## Installing Environment 
-I think that installing python packages in secluded environment was simple can be used using the Python own official virtual environment. To do this, first you must have to install python first. This app using this spesification
+To run this project, we will use a virtual environment to manage our project dependencies. I think that most easiest way to installing python packages in secluded environment is using the Python own official, virtual environment. To do this, first you must have to install python first. The app is using this spesification
 
 1. Python 3.10 version
 2. Mediapipe 0.10.21 version
 
-So for python, you can search for their installer [here](https://www.python.org/downloads/release/python-31011/) and install them. If you have installed them, we can start the virtual environment creation. Of course you can try to install another python version, but keep in mind, I made this project in 3.10 so it can be more stable rather the new python version and currently if using Hailo AI Accelerator, most of their compiler and program running max on Python 3.10 version, so it is recommended that you use Python 3.10 version both on Windows and Linux just for best practices. If you decided to use another python version, do mind that the `requirements.txt` that I have prepared for you will be conflict, you can one-by-one install the package that I list on that `requirements.txt`. I will explain how you can set up the environment in both Windows and Linux for the Raspberry Pi, but keep in mind Windows version, this code probably will favor more on the Linux side, but it's a good idea to be able to run this on Windows aswell. So, before doing the environement set-up, please kindly clone this repo 
+So for python, you can search for their installer [here](https://www.python.org/downloads/release/python-31011/) and install them. If you have installed them, we can start the virtual environment creation. Of course you can try to install another python version, but keep in mind, I made this project in 3.10 so it can be more stable rather the new python version and currently if using Hailo AI Accelerator, most of their compiler and program running max on Python 3.10 version, so it is recommended that you use Python 3.10 version both on Windows and Linux just for best practices. If you decided to use another python version, do mind that the `requirements.txt` that I have prepared for you will be conflict, you can one-by-one install the package that I list on that `requirements.txt`. I will explain how you can set up the environment in both Windows and Linux for the Raspberry Pi, but keep in mind Windows version, this code probably will favor more on the Linux side, but it's a good idea to be able to run this on Windows as-well. So, before doing the environement set-up, please kindly clone this repo 
 
-### Installing environment through Virtual Env (Windows)
+### Preparing environment on Windows
 First go do the work directory. 
 ```bash
 cd drowsiness-detection
@@ -87,8 +87,18 @@ To return to normal system settings, use the deactivate command.
 deactivate
 ```
 
-### Installing Environment through Virtual Env (Linux)
-For running this on Linux Raspberry Pi, the steps are similar when we set up on Windows. First, go to the work directory after clone the repository. 
+I have make a script to automate this preparation. Run the following script to automate the installation process or double click the script located on the `scripts\setup_env_windows.bat`
+```bash
+cd scripts\
+.\setup_env_windows.bat
+```
+
+### Preparing Environment on Linux
+Currently, what I mean for preparing environment on linux is I meant in Raspberry Pi OS, because there are some package and especially hardware (like camera) are really depends on Raspberry Pi repository package. For running this on Linux Raspberry Pi, the steps are similar when we set up on Windows.
+
+But, before preparing the environment to run our project. Kindly read this [guide](docs/preparing-rpi5.md) first to set up your Raspberry Pi first. 
+
+Now, if you have do what guide above tells you, we can continue setting up our environment. First, go to the work directory after clone the repository. 
 ```bash
 cd drowsiness-detection
 ```
@@ -108,13 +118,13 @@ And there we go, if your machine from start doesn't use the spesific Python vers
 python3 --version
 ```
 
-Then, because we decided to make this project inside the Virtual Environment using the Python Virtual Environment, this is a crucial step so the venv can recognize our Pi Camera. This issue has been reported [here](https://forums.raspberrypi.com/viewtopic.php?t=361758). Conda also suffer the biggest from all of this than any other environment package. So, we gonna make this using a simple virtual environment. First make sure to install the package first from the apt package
+Then, because we decided to make this project inside the Virtual Environment using the Python Virtual Environment, this is a crucial step so the venv can recognize our Pi Camera. This issue has been reported [here](https://forums.raspberrypi.com/viewtopic.php?t=361758), where because the camera library are installed using `apt` not thorugh pip, we can easily access this library from inside our virtual environment. Conda also suffer the biggest from all of this than any other environment package. So, we gonna make this using a simple virtual environment. First make sure to install this package first from the apt package
 
 ```bash
 sudo apt install -y python3-libcamera
 ```
 
-Then create the virtual environment using system-site-packages tag
+Then create the virtual environment using `system-site-packages` tag
 
 ```bash
 python3 -m venv --system-site-packages venv
@@ -157,6 +167,13 @@ To return to normal system settings, use the deactivate command.
 ```bash
 deactivate
 ```
+
+Now, congrats you have finish the setup for Raspberry Pi OS System. But actually, I have also make a script to automate this preparation. Run the following script to automate the installation process located on the `scripts\setup_env_raspberry.sh`
+```bash
+chmod +x scripts/setup_env_raspberry.sh
+./scripts/setup_env_raspberry.sh
+```
+
 
 ## How to Run The App
 The app is using FastAPI to control the data of the stream. And to run this, it's quite simple if you follow the setup up environment correctly. We will use uvicorn, An ASGI web server for Python. First, make sure you are in the virtual environment first, and after that simply type this on terminal on the root directory
@@ -210,3 +227,5 @@ All of this can be found [here](https://docs.astral.sh/ruff/tutorial/), so feel 
 2. Muhammad Juniarto 
 
 
+## Project Reference
+1. https://www.hackster.io/AlbertaBeef/accelerating-the-mediapipe-models-on-raspberry-pi-5-ai-kit-1698fe
