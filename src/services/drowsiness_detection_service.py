@@ -15,13 +15,13 @@ from src.utils.drawing_utils import (
 )
 
 from src.utils.landmark_constants import (
-    LEFT_EYE_CONNECTION,
-    RIGHT_EYE_CONNECTION,
-    LEFT_EYEBROW_CONNECTION,
-    RIGHT_EYEBROW_CONNECTION,
-    OUTER_LIPS_CONNECTION,
-    INNER_LIPS_CONNECTION,
-    OUTER_FACE_CONNECTION,
+    LEFT_EYE_CONNECTIONS,
+    RIGHT_EYE_CONNECTIONS,
+    LEFT_EYEBROW_CONNECTIONS,
+    RIGHT_EYEBROW_CONNECTIONS,
+    OUTER_LIPS_CONNECTIONS,
+    INNER_LIPS_CONNECTIONS,
+    OUTER_FACE_CONNECTIONS,
 
     LEFT_EYE_POINTS,
     RIGHT_EYE_POINTS,
@@ -122,16 +122,16 @@ class DrowsinessDetectionService:
 
                 # Draw the result of the eye drowsiness detection
                 if left_eye: 
-                    draw_landmarks(image, face_landmark, LEFT_EYE_CONNECTION)
-                    draw_landmarks(image, face_landmark, LEFT_EYEBROW_CONNECTION, connected=False)
+                    draw_landmarks(image, face_landmark, LEFT_EYE_CONNECTIONS)
+                    draw_landmarks(image, face_landmark, LEFT_EYEBROW_CONNECTIONS)
 
                 if right_eye:
-                    draw_landmarks(image, face_landmark, RIGHT_EYE_CONNECTION)
-                    draw_landmarks(image, face_landmark, RIGHT_EYEBROW_CONNECTION, connected=False)
+                    draw_landmarks(image, face_landmark, RIGHT_EYE_CONNECTIONS)
+                    draw_landmarks(image, face_landmark, RIGHT_EYEBROW_CONNECTIONS)
 
                 if mouth: 
-                    draw_landmarks(image, face_landmark, OUTER_LIPS_CONNECTION)
-                    draw_landmarks(image, face_landmark, INNER_LIPS_CONNECTION)
+                    draw_landmarks(image, face_landmark, OUTER_LIPS_CONNECTIONS)
+                    draw_landmarks(image, face_landmark, INNER_LIPS_CONNECTIONS)
 
                 # Draw the direction of head pose
                 draw_head_pose_direction(image, face_landmark, x_angle, y_angle)

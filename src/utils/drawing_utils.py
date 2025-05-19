@@ -1,45 +1,28 @@
 import cv2
 
-
-def draw_landmarks(image, landmarks, connections, color=(0, 255, 0), size=1, connected=True):
+def draw_landmarks(image, landmarks, connections, color_lines=(0, 255, 0), color_points=(0, 255, 0), size=1):
     """
-    Draws landmarks and optionally connects them with lines.
+    Draws lines between specified pairs of normalized landmarks.
 
     Parameters:
         image (ndarray): The image to draw on.
-        landmarks (list): List of (x, y, z) normalized coordinates (0 to 1).
-        connections (list): List of landmark indices to draw and optionally connect.
-        color (tuple): Color of lines and points (default is green).
-        size (int): Line thickness and point size.
-        connected (bool): Whether to close the loop between the last and first point.
+        landmarks (list of (x, y, z)): Normalized landmark coordinates.
+        connections (list of (start_idx, end_idx)): List of index pairs to connect.
+        color_lines (tuple): BGR color for drawing lines.
+        color_points (tuple): BGR color for drawing each point circle.
+        size (int): Line thickness.
     """
-    height, width, _ = image.shape
+    height, width = image.shape[:2]
 
-    # Draw lines between consecutive landmarks
-    for i in range(len(connections) - 1):
-        x0, y0, _ = landmarks[connections[i]]
-        x1, y1, _ = landmarks[connections[i + 1]]
+    for start_idx, end_idx in connections:
+        x0, y0, _ = landmarks[start_idx]
+        x1, y1, _ = landmarks[end_idx]
 
-        x0, y0 = int(x0 * width), int(y0 * height)
-        x1, y1 = int(x1 * width), int(y1 * height)
+        pt1 = int(x0 * width), int(y0 * height)
+        pt2 = int(x1 * width), int(y1 * height)
 
-        cv2.line(image, (x0, y0), (x1, y1), color, size)
-
-    # Optionally close the loop
-    if connected:
-        x0, y0, _ = landmarks[connections[-1]]
-        x1, y1, _ = landmarks[connections[0]]
-
-        x0, y0 = int(x0 * width), int(y0 * height)
-        x1, y1 = int(x1 * width), int(y1 * height)
-
-        cv2.line(image, (x0, y0), (x1, y1), color, size)
-
-    # Draw a circle at each landmark
-    for i in connections:
-        x, y, _ = landmarks[i]
-        x, y = int(x * width), int(y * height)
-        cv2.circle(image, (x, y), size + 1, color, -1)
+        cv2.line(image, pt1, pt2, color_lines, thickness=size)
+        cv2.circle(image, pt2, size + 1, color_points, -1)
 
 def draw_head_pose_direction(image, face_landmark, x_angle, y_angle, color=(0, 0, 255)):
     """
