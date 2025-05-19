@@ -1,42 +1,72 @@
 import cv2
 
 
-def draw_eye_landmarks(image, eye_landmarks, color=(0, 255, 0)):
-    for i in range(len(eye_landmarks) - 1):
-        pt1 = eye_landmarks[i]
-        pt2 = eye_landmarks[i + 1]
-        cv2.line(image, pt1, pt2, color, 1)
-        cv2.circle(image, pt1, 2, color, -1)
-    pt1 = eye_landmarks[-1]
-    pt2 = eye_landmarks[0]
-    cv2.line(image, pt1, pt2, color, 1)
-    cv2.circle(image, pt1, 2, color, -1)
+def draw_landmarks(image, landmarks, connections, color=(0, 255, 0), size=1, connected=True):
+    """
+    Draws landmarks and optionally connects them with lines.
 
-def draw_mouth_landmarks(image, mouth_landmarks, color=(0, 255, 0), center_line_color=(0, 255, 255)):
-    if len(mouth_landmarks) >= 7:
-        cv2.line(image, mouth_landmarks[2], mouth_landmarks[6], center_line_color, 2)
-    for i in range(len(mouth_landmarks) - 1):
-        pt1 = mouth_landmarks[i]
-        pt2 = mouth_landmarks[i + 1]
-        cv2.line(image, pt1, pt2, color, 1)
-        cv2.circle(image, pt1, 2, (0, 0, 255), -1)
-    pt1 = mouth_landmarks[-1]
-    pt2 = mouth_landmarks[0]
-    cv2.line(image, pt1, pt2, color, 1)
-    cv2.circle(image, pt1, 2, (0, 0, 255), 1)
+    Parameters:
+        image (ndarray): The image to draw on.
+        landmarks (list): List of (x, y, z) normalized coordinates (0 to 1).
+        connections (list): List of landmark indices to draw and optionally connect.
+        color (tuple): Color of lines and points (default is green).
+        size (int): Line thickness and point size.
+        connected (bool): Whether to close the loop between the last and first point.
+    """
+    height, width, _ = image.shape
 
-def draw_hand_landmarks(image, hand_landmarks, color=(0, 255, 255)):
-    for hand in hand_landmarks:
-        for pt in hand:
-            cv2.circle(image, pt, 2, color, -1)
+    # Draw lines between consecutive landmarks
+    for i in range(len(connections) - 1):
+        x0, y0, _ = landmarks[connections[i]]
+        x1, y1, _ = landmarks[connections[i + 1]]
 
-def draw_head_pose_direction(image, face_landmark, x_angle, y_angle, color=(255, 0, 0)):
+        x0, y0 = int(x0 * width), int(y0 * height)
+        x1, y1 = int(x1 * width), int(y1 * height)
+
+        cv2.line(image, (x0, y0), (x1, y1), color, size)
+
+    # Optionally close the loop
+    if connected:
+        x0, y0, _ = landmarks[connections[-1]]
+        x1, y1, _ = landmarks[connections[0]]
+
+        x0, y0 = int(x0 * width), int(y0 * height)
+        x1, y1 = int(x1 * width), int(y1 * height)
+
+        cv2.line(image, (x0, y0), (x1, y1), color, size)
+
+    # Draw a circle at each landmark
+    for i in connections:
+        x, y, _ = landmarks[i]
+        x, y = int(x * width), int(y * height)
+        cv2.circle(image, (x, y), size + 1, color, -1)
+
+def draw_head_pose_direction(image, face_landmark, x_angle, y_angle, color=(0, 0, 255)):
+    """
+    Draws an arrow indicating head pose direction based on face landmarks and rotation angles.
+
+    Parameters:
+        image (ndarray): Image on which to draw.
+        face_landmark (list): List of face landmark coordinates [(x, y, z)].
+        x_angle (float): Pitch angle (up/down).
+        y_angle (float): Yaw angle (left/right).
+        color (tuple): Color of the arrow (default red).
+    """
+    # Starting point: center of the face (e.g., nose tip or landmark index 1)
     p1 = (
         int(face_landmark[1][0] * image.shape[1]),
         int(face_landmark[1][1] * image.shape[0])
     )
-    p2 = (int(p1[0] + y_angle * 10), int(p1[1] - x_angle * 10))
-    cv2.line(image, p1, p2, color, 3)
+    
+    # Ending point determined by the rotation angles
+    p2 = (
+        int(p1[0] + y_angle * 3),
+        int(p1[1] - x_angle * 3)
+    )
+    
+    # Draw the arrowed line
+    cv2.arrowedLine(image, p1, p2, color, thickness=2, tipLength=0.3)
+
 
 def draw_fps(image, fps_text : str, font_scale : int = 0.7, color=(0, 255, 255), thickness : int = 2, padding : int = 10):
     # Get the text size

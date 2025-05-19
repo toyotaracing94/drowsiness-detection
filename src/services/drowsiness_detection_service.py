@@ -9,13 +9,25 @@ from src.lib.hands_detection import HandsDetection
 from src.lib.phone_detection import PhoneDetection
 from src.lib.socket_trigger import SocketTrigger
 from src.utils.drawing_utils import (
-    draw_eye_landmarks,
+    draw_landmarks,
     draw_fps,
-    draw_hand_landmarks,
     draw_head_pose_direction,
-    draw_mouth_landmarks,
 )
 
+from src.utils.landmark_constants import (
+    LEFT_EYE_CONNECTION,
+    RIGHT_EYE_CONNECTION,
+    LEFT_EYEBROW_CONNECTION,
+    RIGHT_EYEBROW_CONNECTION,
+    OUTER_LIPS_CONNECTION,
+    INNER_LIPS_CONNECTION,
+    OUTER_FACE_CONNECTION,
+
+    LEFT_EYE_POINTS,
+    RIGHT_EYE_POINTS,
+    OUTER_LIPS_POINTS,
+    HEAD_POSE_POINTS
+)
 
 class DrowsinessDetectionService:
     def __init__(self):
@@ -72,7 +84,7 @@ class DrowsinessDetectionService:
         # Drowsiness and pose detection
         if face_landmarks:
             for face_landmark in face_landmarks:
-                x_angle, y_angle, _ = self.drowsiness_detector.estimate_head_pose(frame, face_landmark)
+                x_angle, y_angle, _ = self.drowsiness_detector.estimate_head_pose(frame, face_landmark,HEAD_POSE_POINTS)
 
                 direction_text = "Looking Forward"
                 if y_angle < -10: direction_text = "Looking Left"
@@ -80,13 +92,9 @@ class DrowsinessDetectionService:
                 elif x_angle < -10: direction_text = "Looking Down"
                 elif x_angle > 10: direction_text = "Looking Up"
 
-                # Draw the direction of head pose
-                draw_head_pose_direction(image, face_landmark, x_angle, y_angle)
-                cv2.putText(image, direction_text, (50, 120), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
-
                 # Get the left-eye and right-eye landmark and mouth landmark
-                left_eye, right_eye = self.drowsiness_detector.extract_eye_landmark(face_landmark, frame.shape[1], frame.shape[0])
-                mouth = self.drowsiness_detector.extract_mouth_landmark(face_landmark, frame.shape[1], frame.shape[0])
+                left_eye, right_eye = self.drowsiness_detector.extract_eye_landmark(face_landmark, LEFT_EYE_POINTS, RIGHT_EYE_POINTS, frame.shape[1], frame.shape[0])
+                mouth = self.drowsiness_detector.extract_mouth_landmark(face_landmark, OUTER_LIPS_POINTS, frame.shape[1], frame.shape[0])
 
                 # Calculate the EAR Ratio and MAR ratio to check drowsiness
                 ear = (self.drowsiness_detector.calculate_ear(left_eye) + self.drowsiness_detector.calculate_ear(right_eye)) / 2.0
@@ -113,9 +121,21 @@ class DrowsinessDetectionService:
                     self.socket_trigger.save_image(image, 'DROWSINESS', '', 'UPLOAD_IMAGE')
 
                 # Draw the result of the eye drowsiness detection
-                if left_eye: draw_eye_landmarks(image, left_eye)
-                if right_eye: draw_eye_landmarks(image, right_eye)
-                if mouth: draw_mouth_landmarks(image, mouth)
+                if left_eye: 
+                    draw_landmarks(image, face_landmark, LEFT_EYE_CONNECTION)
+                    draw_landmarks(image, face_landmark, LEFT_EYEBROW_CONNECTION, connected=False)
+
+                if right_eye:
+                    draw_landmarks(image, face_landmark, RIGHT_EYE_CONNECTION)
+                    draw_landmarks(image, face_landmark, RIGHT_EYEBROW_CONNECTION, connected=False)
+
+                if mouth: 
+                    draw_landmarks(image, face_landmark, OUTER_LIPS_CONNECTION)
+                    draw_landmarks(image, face_landmark, INNER_LIPS_CONNECTION)
+
+                # Draw the direction of head pose
+                draw_head_pose_direction(image, face_landmark, x_angle, y_angle)
+                cv2.putText(image, direction_text, (50, 120), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
 
         # if hand_results:
         #     hand_landmarks = self.hand_detector.extract_hand_landmark(hand_results, image.shape[1], image.shape[0])

@@ -17,12 +17,6 @@ class DrowsinessDetection():
         # Load Configurations
         self.load_configuration(model_settings_path)
 
-        # Landmarks (Hardcoded for now)
-        self.left_eye_landmarks = [33, 160, 158, 133, 153, 144]
-        self.right_eye_landmarks = [362, 385, 387, 263, 373, 380]
-        self.mouth_landmarks =  [61, 39, 0, 269, 291, 405, 17, 181]
-        self.head_pose_landmarks = [1, 33, 61, 199, 263, 291]
-
         # Counter for the Yawn and Drowsiness
         self.drowsiness_frame_counter = 0
         self.yawn_frame_counter = 0
@@ -85,7 +79,7 @@ class DrowsinessDetection():
         face_landmarks = self.model.inference(processed_image)
         return face_landmarks
 
-    def extract_mouth_landmark(self, face_landmark, frame_width : int = 640, frame_height : int = 480) -> list[tuple[int, int]]:
+    def extract_mouth_landmark(self, face_landmark, mouth_connections : list, frame_width : int = 640, frame_height : int = 480) -> list[tuple[int, int]]:
         """
         Extract the pixel location (x,y) of the selected mouth landmark position from the given a face landmark,
         based on the choosen mouth landmark position index.
@@ -106,7 +100,7 @@ class DrowsinessDetection():
         """
         mouth_pixels = []
 
-        for idx in self.mouth_landmarks:
+        for idx in mouth_connections:
             landmark = face_landmark[idx]
             x = int(landmark[0] * frame_width)  
             y = int(landmark[1] * frame_height)
@@ -114,7 +108,8 @@ class DrowsinessDetection():
         
         return mouth_pixels
     
-    def extract_eye_landmark(self, face_landmark, frame_width : int = 640, frame_height : int = 480) -> tuple[list[tuple[int, int]], list[tuple[int, int]]]:
+    def extract_eye_landmark(self, face_landmark, left_eye_connections : list, right_eye_connections : list,
+                             frame_width : int = 640, frame_height : int = 480) -> tuple[list[tuple[int, int]], list[tuple[int, int]]]:
         """
         Extract the pixel location (x,y) of the left-eye landmark and right-eye landmark from the given face landmark,
         based on the choosen left-eye landmark and right-eye landmark position index 
@@ -138,13 +133,13 @@ class DrowsinessDetection():
         left_eye_pixels = []
         right_eye_pixels = []
 
-        for idx in self.left_eye_landmarks:
+        for idx in left_eye_connections:
             landmark = face_landmark[idx]
             x = int(landmark[0] * frame_width)
             y = int(landmark[1] * frame_height)
             left_eye_pixels.append((x, y))
 
-        for idx in self.right_eye_landmarks:
+        for idx in right_eye_connections:
             landmark = face_landmark[idx]
             x = int(landmark[0] * frame_width)
             y = int(landmark[1] * frame_height)
@@ -152,7 +147,7 @@ class DrowsinessDetection():
         
         return (left_eye_pixels, right_eye_pixels)
     
-    def estimate_head_pose(self, image : np.ndarray, face_landmark):
+    def estimate_head_pose(self, image : np.ndarray, face_landmark, connections : list):
         """
         This function is to Estimate head pose (yaw, pitch, roll) from 
         6 points of face landmarks from Mediapipe by converting the image coordinates
@@ -191,7 +186,7 @@ class DrowsinessDetection():
         img_h, img_w, _ = image.shape
 
         # Extract 3D and 2D landmarks for pose estimation
-        for idx in self.head_pose_landmarks:
+        for idx in connections:
             lm = face_landmark[idx]
             x, y = int(lm[0] * img_w), int(lm[1] * img_h)
 
