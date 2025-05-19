@@ -104,3 +104,18 @@ INDEX_POINTS = [5, 6, 7, 8]
 MIDDLE_POINTS = [9, 10, 11, 12]
 RING_POINTS = [13, 14, 15, 16]
 PINKY_POINTS = [17, 18, 19, 20]
+
+
+# ================================
+# Body Landmark Index Map (MediaPipe Hands reference)
+# ================================
+
+# CONNECTIONS for drawing purpose
+TORSO_CONNECTIONS = [
+    (11, 12), (12, 24), (24, 23), (23, 11),
+]
+
+BODY_POSE_FACE_CONNECTIONS = [
+    (7, 3), (3, 2), (2, 1), (1, 0), 
+    (0, 4), (4, 5), (5, 6), (6, 8)
+]
