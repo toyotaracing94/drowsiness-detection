@@ -3,6 +3,11 @@ import unittest
 import cv2
 
 from src.lib.drowsiness_detection import DrowsinessDetection
+from src.utils.landmark_constants import (
+    LEFT_EYE_POINTS,
+    OUTER_LIPS_POINTS,
+    RIGHT_EYE_POINTS,
+)
 
 
 class DrowsinessTest(unittest.TestCase):
@@ -24,7 +29,7 @@ class DrowsinessTest(unittest.TestCase):
         if face_landmarks:
             for face_landmark in face_landmarks:
                 # Get the left-eye and right-eye landmark
-                left_eye_landmark, right_eye_landmark = self.drowsiness_detector.extract_eye_landmark(face_landmark, frame.shape[1], frame.shape[0])
+                left_eye_landmark, right_eye_landmark = self.drowsiness_detector.extract_eye_landmark(face_landmark, LEFT_EYE_POINTS, RIGHT_EYE_POINTS, frame.shape[1], frame.shape[0])
                 
                 # Calculate the EAR Ratio to check drowsiness
                 left_ear = self.drowsiness_detector.calculate_ear(left_eye_landmark)
@@ -50,7 +55,7 @@ class DrowsinessTest(unittest.TestCase):
         if face_landmarks:
             for face_landmark in face_landmarks:
                 # Get the mouth landmark
-                mouth_eye_landmark = self.drowsiness_detector.extract_mouth_landmark(face_landmark,frame.shape[1], frame.shape[0])
+                mouth_eye_landmark = self.drowsiness_detector.extract_mouth_landmark(face_landmark, OUTER_LIPS_POINTS, frame.shape[1], frame.shape[0])
                 
                 # Calculate the MAR Ratio to check yawning
                 mar = self.drowsiness_detector.calculate_mar(mouth_eye_landmark)
