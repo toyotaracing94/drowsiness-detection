@@ -65,3 +65,42 @@ HEAD_POSE_POINTS = [
 # ================================
 # Hand Landmark Index Map (MediaPipe Hands reference)
 # ================================
+
+# CONNECTIONS for drawing purpose
+HAND_CONNECTIONS = [
+    # Thumb
+    (0, 1), (1, 2), (2, 3), (3, 4),
+    
+    # Index finger
+    (0, 5), (5, 6), (6, 7), (7, 8),
+    
+    # Middle finger
+    (0, 9), (9, 10), (10, 11), (11, 12),
+    
+    # Ring finger
+    (0, 13), (13, 14), (14, 15), (15, 16),
+    
+    # Pinky
+    (0, 17), (17, 18), (18, 19), (19, 20)
+]
+
+# FINGER CONNECTION GROUPS
+THUMB_CONNECTIONS = [(0, 1), (1, 2), (2, 3), (3, 4)]
+INDEX_FINGER_CONNECTIONS = [(0, 5), (5, 6), (6, 7), (7, 8)]
+MIDDLE_FINGER_CONNECTIONS = [(0, 9), (9, 10), (10, 11), (11, 12)]
+RING_FINGER_CONNECTIONS = [(0, 13), (13, 14), (14, 15), (15, 16)]
+PINKY_FINGER_CONNECTIONS = [(0, 17), (17, 18), (18, 19), (19, 20)]
+
+# POINTS for calculations (tips and base joints)
+FINGER_TIPS_PINTS = [4, 8, 12, 16, 20]
+FINGER_BASES_POINTS = [1, 5, 9, 13, 17]
+
+# HAND CENTER for possible palm calculations
+PALM_POINTS = [0, 1, 5, 9, 13, 17]
+
+# Useful for finger orientation or gesture recognition
+THUMB_POINTS = [1, 2, 3, 4]
+INDEX_POINTS = [5, 6, 7, 8]
+MIDDLE_POINTS = [9, 10, 11, 12]
+RING_POINTS = [13, 14, 15, 16]
+PINKY_POINTS = [17, 18, 19, 20]

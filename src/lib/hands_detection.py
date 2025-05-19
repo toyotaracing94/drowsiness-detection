@@ -45,15 +45,17 @@ class HandsDetection():
         hand_results = self.model.inference(preprocess_image)
         return hand_results
 
-    def extract_hand_landmark(self, hand_landmarks, frame_width : int = 640, frame_height : int = 480):
+    def extract_hand_landmark(self, hand_landmark : np.ndarray, hand_connections : list, frame_width : int = 640, frame_height : int = 480):
         """
-        Extract all the 21 pixel location of the hands from the given hand landmark,
+        Extract the pixel location of the hands from the given hand landmark,
         based on the choosen hand landmark position index 
 
         Parameters
         ----------
-        hand_landmarks : list of list of tuple(float, float, float)
+        hand_landmark : list of list of tuple(float, float, float)
             A list where each inner list contains 21 normalized (x, y, z) coordinates of one hand.
+        connections: list of index indices of hand landmark
+            list of index indices of hand landmark
         frame_width : int, optional
             The width of the image frame in pixels. Default is 640.
         frame_height : int, optional
@@ -66,12 +68,10 @@ class HandsDetection():
         """
         all_hands = []
 
-        for hand_landmark in hand_landmarks:
-            hand_pixels = []
-            for lm in hand_landmark:
-                x = int(lm[0] * frame_width)
-                y = int(lm[1] * frame_height)
-                hand_pixels.append((x, y))
-            all_hands.append(hand_pixels)
-        
+        for idx in hand_connections:
+            landmark = hand_landmark[idx]
+            x = int(landmark[0] * frame_width)  
+            y = int(landmark[1] * frame_height)
+            all_hands.append((x,y))
+
         return all_hands

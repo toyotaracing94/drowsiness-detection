@@ -21,12 +21,13 @@ from src.utils.landmark_constants import (
     RIGHT_EYEBROW_CONNECTIONS,
     OUTER_LIPS_CONNECTIONS,
     INNER_LIPS_CONNECTIONS,
-    OUTER_FACE_CONNECTIONS,
+    HAND_CONNECTIONS,
 
     LEFT_EYE_POINTS,
     RIGHT_EYE_POINTS,
     OUTER_LIPS_POINTS,
-    HEAD_POSE_POINTS
+    HEAD_POSE_POINTS,
+    MIDDLE_POINTS
 )
 
 class DrowsinessDetectionService:
@@ -35,7 +36,7 @@ class DrowsinessDetectionService:
         self.socket_trigger = SocketTrigger("config/api_settings.json")
         self.drowsiness_detector = DrowsinessDetection("config/drowsiness_detection_settings.json")
         # self.phone_detection = PhoneDetection("config/pose_detection_settings.json")
-        # self.hand_detector = HandsDetection("config/pose_detection_settings.json")
+        self.hand_detector = HandsDetection("config/pose_detection_settings.json")
         self.prev_time = time.time()
 
     def process_frame(self, frame : np.ndarray):
@@ -67,7 +68,7 @@ class DrowsinessDetectionService:
 
         # Get the landmarks for the face, body and hands
         face_landmarks = self.drowsiness_detector.detect_face_landmarks(frame)
-        # hand_results = self.hand_detector.detect_hand_landmarks(frame)
+        hand_landmarks = self.hand_detector.detect_hand_landmarks(frame)
         # body_pose = self.phone_detection.detect_body_pose(frame)
 
         # Phone usage detection feature get from pose information
@@ -137,9 +138,17 @@ class DrowsinessDetectionService:
                 draw_head_pose_direction(image, face_landmark, x_angle, y_angle)
                 cv2.putText(image, direction_text, (50, 120), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
 
-        # if hand_results:
-        #     hand_landmarks = self.hand_detector.extract_hand_landmark(hand_results, image.shape[1], image.shape[0])
-        #     draw_hand_landmarks(image, hand_landmarks)
+        if hand_landmarks:
+            for hand_landmark in hand_landmarks:
+                # No need for getting the each of the coordinates, 
+                # Because there is no purpose what's so ever right now
+                # so I'm just gonna draw the result
+
+                # Here some example how to get it
+                hand = self.hand_detector.extract_hand_landmark(hand_landmark, MIDDLE_POINTS, image.shape[1], image.shape[0])
+                
+                # Draw the landmarks of the hand
+                draw_landmarks(image, hand_landmark, HAND_CONNECTIONS, color_points=(0,0,0))
 
         # FPS calculation
         current_time = time.time()
