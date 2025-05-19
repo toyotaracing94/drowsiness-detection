@@ -19,7 +19,7 @@ fi
 
 # Step 1: Update system packages
 echo "[INFO] Updating system packages..."
-sudo apt update && sudo apt upgrade -y
+sudo apt update
 
 # Step 2: Ensure pyenv is installed
 if ! command -v pyenv &> /dev/null; then
@@ -33,7 +33,7 @@ if ! command -v pyenv &> /dev/null; then
     # Install pyenv via pyenv-installer
     curl -fsSL https://pyenv.run | bash
 
-    # Add pyenv to bash profile (if not already present)
+    # Add pyenv to .bashrc if not already present
     if ! grep -q 'pyenv init' ~/.bashrc; then
         echo -e '\n# Pyenv initialization' >> ~/.bashrc
         echo 'export PYENV_ROOT="$HOME/.pyenv"' >> ~/.bashrc
@@ -42,14 +42,13 @@ if ! command -v pyenv &> /dev/null; then
         echo 'eval "$(pyenv init -)"' >> ~/.bashrc
     fi
 
-    echo "[INFO] pyenv installed. Please restart your terminal or run:"
-    echo '       export PYENV_ROOT="$HOME/.pyenv"'
-    echo '       export PATH="$PYENV_ROOT/bin:$PATH"'
-    echo '       eval "$(pyenv init --path)"'
-    echo '       eval "$(pyenv init -)"'
-    echo "Then re-run this script."
-    exit 0
+    # Load pyenv into the current shell session immediately
+    export PYENV_ROOT="$HOME/.pyenv"
+    export PATH="$PYENV_ROOT/bin:$PATH"
+    eval "$("$PYENV_ROOT/bin/pyenv" init --path)"
+    eval "$("$PYENV_ROOT/bin/pyenv" init -)"
 fi
+
 
 # Initialize pyenv for current shell
 export PYENV_ROOT="$HOME/.pyenv"
@@ -87,15 +86,7 @@ fi
 echo "[INFO] Activating virtual environment..."
 source "$VENV_DIR/bin/activate"
 
-# Step 9: Upgrade pip
-echo "[INFO] Upgrading pip..."
-python -m pip install --upgrade pip
-
-# Step 10: Install rpi-libcamera Python package
-echo "[INFO] Installing Python bindings for libcamera to be able to use it on Virtual Environment..."
-pip install rpi-libcamera
-
-# Step 11: Install project dependencies
+# Step 9: Install project dependencies
 if [ -f "$REQUIREMENTS_FILE" ]; then
     echo "[INFO] Installing dependencies from $REQUIREMENTS_FILE..."
     pip install -r "$REQUIREMENTS_FILE"
@@ -103,7 +94,7 @@ else
     echo "[WARNING] $REQUIREMENTS_FILE not found. Skipping."
 fi
 
-# Step 12: Install uvicorn for FastAPI
+# Step 10: Install uvicorn for FastAPI
 echo "[INFO] Installing uvicorn server..."
 pip install "uvicorn[standard]"
 

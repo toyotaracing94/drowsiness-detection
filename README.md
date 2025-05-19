@@ -121,7 +121,7 @@ python3 --version
 Then, because we decided to make this project inside the Virtual Environment using the Python Virtual Environment, this is a crucial step so the venv can recognize our Pi Camera. This issue has been reported [here](https://forums.raspberrypi.com/viewtopic.php?t=361758), where because the camera library are installed using `apt` not thorugh pip, we can easily access this library from inside our virtual environment. Conda also suffer the biggest from all of this than any other environment package. So, we gonna make this using a simple virtual environment. First make sure to install this package first from the apt package
 
 ```bash
-sudo apt install -y python3-libcamera
+sudo apt install -y python3-libcamera libcamera-dev
 ```
 
 Then create the virtual environment using `system-site-packages` tag
@@ -130,24 +130,13 @@ Then create the virtual environment using `system-site-packages` tag
 python3 -m venv --system-site-packages venv
 ```
 
-The `--system-site-packages` is really important one
+The `--system-site-packages` is really important one, as this will allow us to use package that installed by root system through `apt` in our virtual environment.
 
 You will see now a folder named `venv` will be created in your work directory. Now that we have a virtual environment been created, we now need to activate it.
 
 ```bash
 source venv\bin\activate
 ```
-
-Before installing the packages, first we have to make sure, as this will allow us to install other packages in the virtual environment, while using the system versions of packages such as libcamera.
-
-After that, we can install the Python bindings of the libcamera by this instruction.
-
-```bash
-sudo apt install -y libcamera-dev
-pip install rpi-libcamera
-```
-
-The detailed instruction for this spesific step can be found [here](https://github.com/raspberrypi/pylibcamera).
 
 After that, you can see the virtual environment has been activated by seeing the (venv) in your terminal. After you activate the virtual environment, you can add packages to it using `pip`. You can also create a description of your dependencies using `pip`. In this repo, I have made it the packages that required in order to run this app, so simply just install them with this following command
 
