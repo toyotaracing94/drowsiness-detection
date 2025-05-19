@@ -45,11 +45,10 @@ def get_hands_pose_model(config_path : str, model_path : str = None):
         )
         return MediapipeHandsModel(config_path)
     try:
-        # TODO : Implemented for Hailo Acceleration
-        from src.models.mediapipe_wrappers.mediapipe_hands_model import (
-            MediapipeHandsModel,
+        from src.models.hailo.blaze_model.hands.blaze_hands_pipeline import (
+            BlazeHandsPipeline,
         )
-        return MediapipeHandsModel(config_path)
+        return BlazeHandsPipeline(config_path)
     
     except ImportError or NotImplementedError:
         from src.models.mediapipe_wrappers.mediapipe_hands_model import (

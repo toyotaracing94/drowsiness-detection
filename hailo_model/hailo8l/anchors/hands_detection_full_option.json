@@ -1,0 +1,14 @@
+{
+    "num_layers": 4,
+    "min_scale": 0.1484375,
+    "max_scale": 0.75,
+    "input_size_height": 192,
+    "input_size_width": 192,
+    "anchor_offset_x": 0.5,
+    "anchor_offset_y": 0.5,
+    "strides": [8, 16, 16, 16],
+    "aspect_ratios": [1.0],
+    "reduce_boxes_in_lowest_layer": false,
+    "interpolated_scale_aspect_ratio": 1.0,
+    "fixed_anchor_size": true
+}

@@ -10,6 +10,7 @@
     "min_score_thresh": 0.6,
     "min_suppression_threshold": 0.3,
     "num_keypoints": 6,
+    
     "detection2roi_method": "box",
     "kp1": 1,
     "kp2": 0,
