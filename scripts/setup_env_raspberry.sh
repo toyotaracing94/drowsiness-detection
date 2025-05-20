@@ -5,7 +5,7 @@
 # ===============================
 
 VENV_DIR="venv"
-PYTHON_VERSION="3.10.15"
+PYTHON_VERSION="3.10"
 REQUIREMENTS_FILE="requirements-linux.txt"
 
 echo "=========================================="
