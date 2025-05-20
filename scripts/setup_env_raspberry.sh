@@ -21,37 +21,32 @@ fi
 echo "[INFO] Updating system packages..."
 sudo apt update
 
-# Step 2: Check for pyenv and required Python version
+# Step 2: Check for pyenv
 if ! command -v pyenv &> /dev/null; then
-    echo "[ERROR] pyenv is not installed. Please install pyenv and Python $PYTHON_VERSION before running this script."
+    echo "[ERROR] pyenv is not installed or not in PATH."
+    echo "        Please install pyenv and ensure it's configured in your shell before running this script."
     exit 1
 fi
 
-if ! pyenv versions --bare | grep -q "$PYTHON_VERSION"; then
-    echo "[ERROR] Python $PYTHON_VERSION is not installed via pyenv."
-    echo "        Please install it by running: pyenv install $PYTHON_VERSION"
-    exit 1
+# Step 3: Install desired Python version if not installed
+if ! pyenv versions --bare | grep -q "^${PYTHON_VERSION}\$"; then
+    echo "[INFO] Python $PYTHON_VERSION is not installed. Installing with pyenv..."
+    pyenv install "$PYTHON_VERSION"
 fi
 
-# Initialize pyenv for current shell
-export PYENV_ROOT="$HOME/.pyenv"
-export PATH="$PYENV_ROOT/bin:$PATH"
-eval "$(pyenv init --path)"
-eval "$(pyenv init -)"
-
-# Step 3: Set Python version globally
-echo "[INFO] Setting Python $PYTHON_VERSION as global version..."
+# Step 4: Set Python version globally for this shell
+echo "[INFO] Setting Python $PYTHON_VERSION as the global version..."
 pyenv global "$PYTHON_VERSION"
 
-# Step 4: Confirm Python version
+# Step 5: Confirm Python version
 PY_VERSION=$(python3 --version)
 echo "[INFO] Current Python version: $PY_VERSION"
 
-# Step 5: Install libcamera system packages
+# Step 6: Install libcamera system packages
 echo "[INFO] Installing Raspberry Pi camera libraries..."
 sudo apt install -y python3-libcamera libcamera-dev
 
-# Step 6: Create virtual environment
+# Step 7: Create virtual environment
 if [ -d "$VENV_DIR" ]; then
     echo "[INFO] Virtual environment already exists. Skipping creation."
 else
@@ -59,11 +54,11 @@ else
     python3 -m venv --system-site-packages "$VENV_DIR"
 fi
 
-# Step 7: Activate virtual environment
+# Step 8: Activate virtual environment
 echo "[INFO] Activating virtual environment..."
 source "$VENV_DIR/bin/activate"
 
-# Step 8: Install project dependencies
+# Step 9: Install project dependencies
 if [ -f "$REQUIREMENTS_FILE" ]; then
     echo "[INFO] Installing dependencies from $REQUIREMENTS_FILE..."
     pip install -r "$REQUIREMENTS_FILE"
@@ -71,7 +66,7 @@ else
     echo "[WARNING] $REQUIREMENTS_FILE not found. Skipping."
 fi
 
-# Step 9: Install uvicorn for FastAPI
+# Step 10: Install uvicorn for FastAPI
 echo "[INFO] Installing uvicorn server..."
 pip install "uvicorn[standard]"
 
