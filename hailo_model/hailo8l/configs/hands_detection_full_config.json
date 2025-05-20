@@ -1,0 +1,20 @@
+{    
+    "num_classes": 1,
+    "num_anchors": 2016,
+    "num_coords": 18,
+    "score_clipping_thresh": 100.0,
+    "x_scale": 192.0,
+    "y_scale": 192.0,
+    "h_scale": 192.0,
+    "w_scale": 192.0,
+    "min_score_thresh": 0.5,
+    "min_suppression_threshold": 0.3,
+    "num_keypoints": 7,
+
+    "detection2roi_method": "box",
+    "kp1": 0,
+    "kp2": 2,
+    "theta0": 1.570796326794,
+    "dscale": 2.6,
+    "dy": -0.5
+}

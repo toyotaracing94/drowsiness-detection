@@ -1,5 +1,6 @@
-import cv2
 import os
+
+import cv2
 import numpy as np
 
 from src.utils.logging import logging_default
@@ -36,17 +37,16 @@ class Camera:
                 frame = self.picam2.capture_array()
                 if frame is not None:
                     return True, frame
-                else:
-                    logging_default.warning("Pi Camera 2 returned None Frame!")
-                    return False, None
+                logging_default.warning("Pi Camera 2 returned None Frame!")
+                return False, None
             except Exception as e:
                 logging_default.error(f"Error capturing frame image from Pi Camera 2: {e}")
         elif self.cap:
             ret, frame = self.cap.read()
             if ret and frame is not None:
                 return True, frame
-            else:
-                logging_default.warning("cv2.VideoCapture returned None Frame!")
+            logging_default.warning("cv2.VideoCapture returned None Frame!")
+            return False, None
         else:
             logging_default.error("No Camera available!")
             return False, None

@@ -1,134 +1,118 @@
-import cv2
 import time
+
+import cv2
+import numpy as np
+
 from src.hardware.camera import Camera
 from src.lib.drowsiness_detection import DrowsinessDetection
-from src.lib.pose_detection import PoseDetection
+from src.lib.hands_detection import HandsDetection
+from src.lib.phone_detection import PhoneDetection
 from src.lib.socket_trigger import SocketTrigger
-
 from src.utils.drawing_utils import (
-    draw_eye_landmarks,
-    draw_mouth_landmarks,
-    draw_hand_landmarks,
+    draw_landmarks,
+    draw_fps,
     draw_head_pose_direction,
-    draw_fps
 )
 
-# Initailize the hardware and the lib services
-camera = Camera()
-socket_trigger = SocketTrigger("config/api_settings.json")
-drowsiness_detector = DrowsinessDetection("config/drowsiness_detection_settings.json")
-pose_detector = PoseDetection("config/pose_detection_settings.json")
+from src.utils.landmark_constants import (
+    LEFT_EYE_CONNECTIONS,
+    RIGHT_EYE_CONNECTIONS,
+    LEFT_EYEBROW_CONNECTIONS,
+    RIGHT_EYEBROW_CONNECTIONS,
+    OUTER_LIPS_CONNECTIONS,
+    INNER_LIPS_CONNECTIONS,
+    HAND_CONNECTIONS,
+    BODY_POSE_FACE_CONNECTIONS,
 
-def generate_original_capture_stream():
-    """
-    This function special for the FastAPI backend controller to continuously captures frames from the camera
-    and return a stream for real-time display transmission
-    """
-    while True:
-        # Capture the video stream
-        ret, frame = camera.get_capture()
-        frame = cv2.flip(frame, 1)
-        if not ret:
-            break
+    LEFT_EYE_POINTS,
+    RIGHT_EYE_POINTS,
+    OUTER_LIPS_POINTS,
+    HEAD_POSE_POINTS,
+    MIDDLE_POINTS
+)
 
-        # Encode the frame as JPEG
-        success, buffer = cv2.imencode('.jpg', frame)
-        if not success:
-            continue
+class DrowsinessDetectionService:
+    def __init__(self):
+        self.camera = Camera()
+        self.socket_trigger = SocketTrigger("config/api_settings.json")
+        self.drowsiness_detector = DrowsinessDetection("config/drowsiness_detection_settings.json")
+        self.phone_detection = PhoneDetection("config/pose_detection_settings.json")
+        self.hand_detector = HandsDetection("config/pose_detection_settings.json")
+        self.prev_time = time.time()
 
-        frame_bytes = buffer.tobytes()
-        yield (b'--frame\r\n'
-               b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
+    def process_frame(self, frame : np.ndarray):
+        """
+        This function is to process the frame and run multiple models to achieve the
+        drowsiness detection. This class service will also hold the logic to count
+        how time passed for the result of the model based on the `intent-wrapper` of the model
 
-def generate_drowsiness_stream():
-    """
-    This function special for the FastAPI backend controller to continuously captures frames from the camera, processes them for drowsiness detection, 
-    and generates back a video stream with annotated landmarks and detection results.
-
-    This function performs the following operations on each frame:
-    1. Captures a video frame from the camera.
-    2. Detects multi-face landmarks using a drowsiness detection model.
-    3. Detects hand landmarks and body pose.
-    4. Identifies if the user is making a phone call based on body pose.
-    5. Estimates head pose (yaw, pitch, roll) and draws corresponding annotations.
-    6. Checks for drowsiness and yawning based on eye aspect ratio (EAR) and mouth aspect ratio (MAR).
-    7. Draws annotations for detected landmarks (eyes, mouth, hands).
-    8. Encodes the processed frame as a JPEG image for streaming.
-
-    The resulting frames are yielded as a stream for real-time display or transmission.
-    """
-    pTime = time.time()
-    while True:
-        # Capture the video stream
-        ret, frame = camera.get_capture()
-        frame = cv2.flip(frame, 1) 
-
-        # Copy the frame to be passed around and keep the original one
-        if not ret:
-            break
-        image = frame.copy()
+        Note
+        ----------
+        So the way it works is like this
         
-        # Get the Multi-Face Mesh Landmarks (486 points)
-        face_landmarks = drowsiness_detector.detect_landmarks(frame)
-        # Find hand landmarks
-        hand_results = pose_detector.detect_hand_landmarks(frame)
-        # Get the body-pose
-        body_pose = pose_detector.detect_body_pose(frame)
+        Workflow:  
+            Controller --> Service --> Intent Use Case Wrapper --> Model [frame requested for processing]
+            Controller <-- Service <-- Intent Use Case Wrapper <-- Model [results returned]
 
-        # Phone usage feature get from pose information
-        is_calling, dist = pose_detector.detect_phone_usage(
-            body_pose,
-            frame_width=frame.shape[1],
-            frame_height=frame.shape[0]
-        )
+        Parameters
+        ----------
+        frame : np.ndarray
+            The image frame of which want to get drowsiness detection service result
 
-        if is_calling:
-            cv2.putText(image, "Making a phone call", (50, 150), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+        Return
+        ----------
+        image
+            An Image that has been process by the model, with landmark's draw has been
+            draw directly to the image
+        """
+        image = frame.copy()
 
-        if dist is not None:
-            cv2.putText(image, f"Distance: {dist:.2f}", (20, frame.shape[0] - 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 0), 2)
+        # Get the landmarks for the face, body and hands
+        face_landmarks = self.drowsiness_detector.detect_face_landmarks(frame)
+        hand_landmarks = self.hand_detector.detect_hand_landmarks(frame)
+        body_landmark = self.phone_detection.detect_body_pose(frame)
 
-        # Detect the drowsiness and the head pose estimation from the face landmarks information
-        if face_landmarks.multi_face_landmarks:
-            for face_landmark in face_landmarks.multi_face_landmarks:
-                # Get the head pose (yaw, pitch, roll)
-                x_angle, y_angle, z_angle = drowsiness_detector.estimate_head_pose(frame, face_landmark)
+        # Phone usage detection feature get from pose information
+        if body_landmark:      
+            is_calling, distance = self.phone_detection.detect_phone_usage(
+                body_landmark, frame.shape[1], frame.shape[0]
+            )
 
-                # Draw the head pose direction
-                head_pose_text = "Looking Forward"
-                if y_angle < -10:
-                    head_pose_text = "Looking Left"
-                elif y_angle > 10:
-                    head_pose_text = "Looking Right"
-                elif x_angle < -10:
-                    head_pose_text = "Looking Down"
-                elif x_angle > 10:
-                    head_pose_text = "Looking Up"
+            if is_calling:
+                cv2.putText(image, "Making a phone call", (50, 150), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+            if distance is not None:
+                cv2.putText(image, f"Distance: {distance:.2f}", (20, frame.shape[0] - 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 0), 2)
 
-                # Draw the direction of head pose
-                draw_head_pose_direction(image,face_landmark, x_angle, y_angle)
+            # Drawing the result
+            draw_landmarks(image, body_landmark, BODY_POSE_FACE_CONNECTIONS, color_lines=(255,0,0), color_points=(0,0,255))
+            
+        # Drowsiness and pose detection
+        if face_landmarks:
+            for face_landmark in face_landmarks:
+                x_angle, y_angle, _ = self.drowsiness_detector.estimate_head_pose(frame, face_landmark,HEAD_POSE_POINTS)
 
-                # Add the head pose text to the frame
-                cv2.putText(image, head_pose_text, (50, 120), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
+                direction_text = "Looking Forward"
+                if y_angle < -10: direction_text = "Looking Left"
+                elif y_angle > 10: direction_text = "Looking Right"
+                elif x_angle < -10: direction_text = "Looking Down"
+                elif x_angle > 10: direction_text = "Looking Up"
 
-                # Get the left-eye and right-eye landmark
-                left_eye_landmark, right_eye_landmark = drowsiness_detector.extract_eye_landmarks(face_landmark, frame.shape[1], frame.shape[0])
+                # Get the left-eye and right-eye landmark and mouth landmark
+                left_eye, right_eye = self.drowsiness_detector.extract_eye_landmark(face_landmark, LEFT_EYE_POINTS, RIGHT_EYE_POINTS, frame.shape[1], frame.shape[0])
+                mouth = self.drowsiness_detector.extract_mouth_landmark(face_landmark, OUTER_LIPS_POINTS, frame.shape[1], frame.shape[0])
 
-                # Get the mouth landmark
-                mouth_landmark = drowsiness_detector.extract_mouth_landmarks(face_landmark, frame.shape[1], frame.shape[0])
+                # Calculate the EAR Ratio and MAR ratio to check drowsiness
+                ear = (self.drowsiness_detector.calculate_ear(left_eye) + self.drowsiness_detector.calculate_ear(right_eye)) / 2.0
+                mar = self.drowsiness_detector.calculate_mar(mouth)
 
-                # Calculate the EAR Ratio to check drowsiness
-                left_ear = drowsiness_detector.calculate_ear(left_eye_landmark)
-                right_ear = drowsiness_detector.calculate_ear(right_eye_landmark) 
-                # Average the EAR of both eyes
-                ear = (left_ear + right_ear) / 2.0
-
-                # Calculate the MAR Ratio to check yawning
-                mar = drowsiness_detector.calculate_mar(mouth_landmark)
-
-                # Check for drowsiness
-                if drowsiness_detector.check_drowsiness(ear):
+                # Check for drowsines
+                if self.drowsiness_detector.check_drowsiness(ear):
                     cv2.putText(image, "Drowsy!", (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
+                    self.socket_trigger.save_image(image, 'DROWSINESS', '', 'UPLOAD_IMAGE')
+
+                # Check for yawning
+                if self.drowsiness_detector.check_yawning(mar):
+                    cv2.putText(image, "Yawning!", (50, 80), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 255), 2)
 
                     # TODO : Find a mechanism to like a right timing to send those drowsiness event to the server
                     # Just think about it. Let's say in one timeframe or like just say for arguments
@@ -139,41 +123,41 @@ def generate_drowsiness_stream():
                     # at what event (*) should we send this into server?
                     # For now I'll just add this, always set send_to_server to false for now
 
-                    socket_trigger.save_image(image, 'DROWSINESS', '', 'UPLOAD_IMAGE')
-
-                # Check for yawning
-                if drowsiness_detector.check_yawning(mar):
-                    cv2.putText(image, "Yawning!", (50, 80), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 255), 2)
+                    self.socket_trigger.save_image(image, 'DROWSINESS', '', 'UPLOAD_IMAGE')
 
                 # Draw the result of the eye drowsiness detection
-                if left_eye_landmark and right_eye_landmark:
-                    # Draw connected circles for left eye
-                    draw_eye_landmarks(image, left_eye_landmark)
-                    # Draw connected circles for left eye
-                    draw_eye_landmarks(image, right_eye_landmark)
+                if left_eye: 
+                    draw_landmarks(image, face_landmark, LEFT_EYE_CONNECTIONS)
+                    draw_landmarks(image, face_landmark, LEFT_EYEBROW_CONNECTIONS)
 
-                # Draw the mouth
-                if mouth_landmark:
-                    draw_mouth_landmarks(image, mouth_landmark)
+                if right_eye:
+                    draw_landmarks(image, face_landmark, RIGHT_EYE_CONNECTIONS)
+                    draw_landmarks(image, face_landmark, RIGHT_EYEBROW_CONNECTIONS)
 
-        # Draw hand landmarks
-        if hand_results.multi_hand_landmarks:
-            hand_landmarks = pose_detector.extract_hand_landmarks(hand_results, image.shape[1], image.shape[0])
-            draw_hand_landmarks(image, hand_landmarks)
-        
-        # Drawing FPS Calculation
-        cTime = time.time()
-        fps = 1 / (cTime - pTime)
-        pTime = cTime
-        fpsText = f"FPS : {fps:.2f}"
-        draw_fps(image, fpsText)
+                if mouth: 
+                    draw_landmarks(image, face_landmark, OUTER_LIPS_CONNECTIONS)
+                    draw_landmarks(image, face_landmark, INNER_LIPS_CONNECTIONS)
 
+                # Draw the direction of head pose
+                draw_head_pose_direction(image, face_landmark, x_angle, y_angle)
+                cv2.putText(image, direction_text, (50, 120), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
 
-        # Encode the frame as JPEG
-        success, buffer = cv2.imencode('.jpg', image)
-        if not success:
-            continue
+        if hand_landmarks:
+            for hand_landmark in hand_landmarks:
+                # No need for getting the each of the coordinates, 
+                # Because there is no purpose what's so ever right now
+                # so I'm just gonna draw the result
 
-        frame_bytes = buffer.tobytes()
-        yield (b'--frame\r\n'
-               b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
+                # Here some example how to get it
+                hand = self.hand_detector.extract_hand_landmark(hand_landmark, MIDDLE_POINTS, image.shape[1], image.shape[0])
+                
+                # Draw the landmarks of the hand
+                draw_landmarks(image, hand_landmark, HAND_CONNECTIONS, color_points=(0,0,0))
+
+        # FPS calculation
+        current_time = time.time()
+        fps = 1 / (current_time - self.prev_time)
+        self.prev_time = current_time
+        draw_fps(image, f"FPS : {fps:.2f}")
+
+        return image
