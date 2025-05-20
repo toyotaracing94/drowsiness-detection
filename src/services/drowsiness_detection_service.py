@@ -3,7 +3,6 @@ import time
 import cv2
 import numpy as np
 
-from src.hardware.camera import Camera
 from src.lib.drowsiness_detection import DrowsinessDetection
 from src.lib.hands_detection import HandsDetection
 from src.lib.phone_detection import PhoneDetection
@@ -12,6 +11,9 @@ from src.utils.drawing_utils import (
     draw_landmarks,
     draw_fps,
     draw_head_pose_direction,
+)
+from src.hardware.hardware_factory import (
+    get_camera
 )
 
 from src.utils.landmark_constants import (
@@ -33,7 +35,7 @@ from src.utils.landmark_constants import (
 
 class DrowsinessDetectionService:
     def __init__(self):
-        self.camera = Camera()
+        self.camera = get_camera()
         self.socket_trigger = SocketTrigger("config/api_settings.json")
         self.drowsiness_detector = DrowsinessDetection("config/drowsiness_detection_settings.json")
         self.phone_detection = PhoneDetection("config/pose_detection_settings.json")
