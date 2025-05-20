@@ -8,10 +8,10 @@ from src.models.hailo.hailo_runtime.hailo_inference_engine import HailoInference
 
 
 class BlazeHandsPipeline(BaseModelInference):
-    def __init__(self, config_path : str):
+    def __init__(self, config_path : str, hailo_engine : HailoInferenceEngine):
         super().__init__()
 
-        self.hailo_inference = HailoInferenceEngine()
+        self.hailo_inference = hailo_engine
         self.hailo_hands_detection_model = "hailo_model/hailo8l/hef/palm_detection_full.hef"
         self.hands_detection_model_anchors = "hailo_model/hailo8l/anchors/hands_detection_full_option.json"
         self.hands_detection_model_inference_config = "hailo_model/hailo8l/configs/hands_detection_full_config.json"
