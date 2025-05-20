@@ -37,7 +37,7 @@ fi
 # Step 3: Install desired Python version if not installed
 if ! pyenv versions --bare | grep -q "^${PYTHON_VERSION}\$"; then
     echo "[INFO] Python $PYTHON_VERSION is not installed. Installing with pyenv..."
-    pyenv install "$PYTHON_VERSION"
+    pyenv install -v "$PYTHON_VERSION"
 fi
 
 # Step 4: Set Python version for this shell
