@@ -21,8 +21,14 @@ fi
 echo "[INFO] Updating system packages..."
 sudo apt update
 
-# Step 2: Check for pyenv
-if ! command -v pyenv &> /dev/null; then
+# Step 2: Load pyenv (IMPORTANT for script usage)
+export PYENV_ROOT="$HOME/.pyenv"
+export PATH="$PYENV_ROOT/bin:$PATH"
+
+if command -v pyenv >/dev/null 2>&1; then
+    eval "$(pyenv init --path)"
+    eval "$(pyenv init -)"
+else
     echo "[ERROR] pyenv is not installed or not in PATH."
     echo "        Please install pyenv and ensure it's configured in your shell before running this script."
     exit 1
@@ -34,12 +40,12 @@ if ! pyenv versions --bare | grep -q "^${PYTHON_VERSION}\$"; then
     pyenv install "$PYTHON_VERSION"
 fi
 
-# Step 4: Set Python version globally for this shell
-echo "[INFO] Setting Python $PYTHON_VERSION as the global version..."
-pyenv global "$PYTHON_VERSION"
+# Step 4: Set Python version for this shell
+echo "[INFO] Setting Python $PYTHON_VERSION for this shell session..."
+pyenv shell "$PYTHON_VERSION"
 
 # Step 5: Confirm Python version
-PY_VERSION=$(python3 --version)
+PY_VERSION=$(python --version)
 echo "[INFO] Current Python version: $PY_VERSION"
 
 # Step 6: Install libcamera system packages
@@ -51,7 +57,7 @@ if [ -d "$VENV_DIR" ]; then
     echo "[INFO] Virtual environment already exists. Skipping creation."
 else
     echo "[INFO] Creating virtual environment with system site packages..."
-    python3 -m venv --system-site-packages "$VENV_DIR"
+    python -m venv --system-site-packages "$VENV_DIR"
 fi
 
 # Step 8: Activate virtual environment
