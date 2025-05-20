@@ -12,3 +12,10 @@ def get_camera():
     else:
         from src.hardware.camera.cv_camera import CVCamera
         return CVCamera()
+
+def get_buzzer():
+    if os.name == "posix":
+        pass
+    else:
+        from src.hardware.buzzer.windows_buzzer import WindowsBuzzer
+        return WindowsBuzzer()

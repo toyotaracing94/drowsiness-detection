@@ -2,18 +2,22 @@ import time
 
 import cv2
 import numpy as np
+import threading
+from functools import partial
 
 from src.lib.drowsiness_detection import DrowsinessDetection
 from src.lib.hands_detection import HandsDetection
 from src.lib.phone_detection import PhoneDetection
 from src.lib.socket_trigger import SocketTrigger
+from src.utils.logging import logging_default
 from src.utils.drawing_utils import (
     draw_landmarks,
     draw_fps,
     draw_head_pose_direction,
 )
-from src.hardware.hardware_factory import (
-    get_camera
+from hardware.factory_hardware import (
+    get_camera,
+    get_buzzer
 )
 
 from src.utils.landmark_constants import (
@@ -36,11 +40,76 @@ from src.utils.landmark_constants import (
 class DrowsinessDetectionService:
     def __init__(self):
         self.camera = get_camera()
+        self.buzzer = get_buzzer()
         self.socket_trigger = SocketTrigger("config/api_settings.json")
         self.drowsiness_detector = DrowsinessDetection("config/drowsiness_detection_settings.json")
         self.phone_detection = PhoneDetection("config/pose_detection_settings.json")
         self.hand_detector = HandsDetection("config/pose_detection_settings.json")
         self.prev_time = time.time()
+
+        self.drowsiness_start_time = None
+        self.yawning_start_time = None
+
+        self.buzzer_thread = None
+        self.buzzer_function = None
+        self.keep_beeping = False
+
+        self.drowsiness_notification_flag_sent = False
+        self.yawning_notification_flag_sent = False
+
+    def start_buzzer(self, buzzer_function : callable):
+        """
+        This function starts the buzzer function in a new thread, allowing the buzzer
+        to run concurrently with the rest of the application without blocking the main thread.
+        
+        If there is already an active buzzer thread running, it will check if the 
+        requested buzzer function is different from the currently active function. 
+        If it is, the new function will replace the old one. Otherwise, the function will 
+        not restart the thread.
+
+        Parameters
+        ----------
+        buzzer_function : function
+            A function that handles the buzzer behavior (such as calling `beep()` 
+            or any other logic for controlling the buzzer). The function will be executed 
+            repeatedly in the background thread.
+
+        Notes
+        -----
+        - The buzzer function is expected to run continuously or in a loop until the
+          `stop_buzzer()` method is called.
+        - The `start_buzzer()` method prevents multiple threads from being created for
+          the same buzzer function. If a thread is already running with the same function,
+          it won't create a new thread.
+        """
+        if self.buzzer_thread and self.buzzer_thread.is_alive():
+            if self.buzzer_function != buzzer_function:
+                self.buzzer_function = buzzer_function
+            return
+
+        self.keep_beeping = True
+        self.buzzer_function = buzzer_function
+        self.buzzer_thread = threading.Thread(target=self.buzzer_loop, daemon=True)
+        self.buzzer_thread.start()
+
+    def stop_buzzer(self):
+        """
+        This function stops the buzzer function by setting the `keep_beeping` flag to `False`
+        and clearing the `buzzer_function` and `drowsiness_stage`. So the actuall function that
+        was running the "pseudo-function" of the beep can be putted down without clearing the Thread
+        """
+        self.keep_beeping = False
+        self.buzzer_function = None
+        self.drowsiness_stage = None
+    
+    def buzzer_loop(self):
+        """
+        This is the background loop that continuously executes the `buzzer_function` 
+        while `keep_beeping` is `True` and a valid `buzzer_function` is set. The function
+        is run repeatedly until `stop_buzzer()` is called, which sets `keep_beeping` to `False`.
+        """
+        while self.keep_beeping and self.buzzer_function:
+            self.buzzer_function()
 
     def process_frame(self, frame : np.ndarray):
         """
@@ -110,22 +179,45 @@ class DrowsinessDetectionService:
                 # Check for drowsines
                 if self.drowsiness_detector.check_drowsiness(ear):
                     cv2.putText(image, "Drowsy!", (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
-                    self.socket_trigger.save_image(image, 'DROWSINESS', '', 'UPLOAD_IMAGE')
+
+                    if self.drowsiness_start_time is None:
+                        self.drowsiness_start_time = time.time()
+
+                    # Calculate the time passes
+                    duration = time.time() - self.drowsiness_start_time
+
+                    # Start  running the buzzer in the background
+                    if 2 <= duration < 5:
+                        self.start_buzzer(self.buzzer.beep_first_stage)
+                    elif 5 <= duration < 10:
+                        self.start_buzzer(self.buzzer.beep_second_stage)
+                    elif duration >= 10:
+                        self.start_buzzer(self.buzzer.beep_third_stage)
+
+                    # Send the notification
+                    if not self.drowsiness_notification_flag_sent:
+                        self.socket_trigger.save_image(image, 'DROWSINESS', '', 'UPLOAD_IMAGE')
+                        self.drowsiness_notification_flag_sent = True
+
+                else:
+                    duration = time.time() - self.drowsiness_start_time
+                    logging_default.info(f"Driver regained alertness after {duration:.2f} seconds of drowsiness.")
+
+                    self.drowsiness_start_time = None
+                    self.drowsiness_notification_flag_sent = False
+                    self.stop_buzzer()
 
                 # Check for yawning
                 if self.drowsiness_detector.check_yawning(mar):
                     cv2.putText(image, "Yawning!", (50, 80), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 255), 2)
 
-                    # TODO : Find a mechanism to like a right timing to send those drowsiness event to the server
-                    # Just think about it. Let's say in one timeframe or like just say for arguments
-                    # it's 10 seconds. In that 10 second there will be like multiple frames (mark with this *)
-                    # There's no way we want in every frame to send data to that, server will be overwhelmed
-                    # Let's say this below ...
-                    # <START DROWSINESS TRIGGER> * * * * * * *  ...  * <SOMEHOW DRIVER WAKES UP>
-                    # at what event (*) should we send this into server?
-                    # For now I'll just add this, always set send_to_server to false for now
-
-                    self.socket_trigger.save_image(image, 'DROWSINESS', '', 'UPLOAD_IMAGE')
+                    if not self.drowsiness_notification_flag_sent:
+                        logging_default.info("Driver appears to be yawning. Triggering notification.")
+                        self.socket_trigger.save_image(image, 'DROWSINESS', '', 'UPLOAD_IMAGE')
+                        self.yawning_notification_flag_sent = True
+                else:
+                    # Reset for the notification flag
+                    self.yawning_notification_flag_sent = False
 
                 # Draw the result of the eye drowsiness detection
                 if left_eye: 
