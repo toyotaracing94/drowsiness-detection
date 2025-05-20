@@ -21,9 +21,35 @@ fi
 echo "[INFO] Updating system packages..."
 sudo apt update
 
+# Step 1.5: Ensure pyenv is installed
+if ! command -v pyenv &> /dev/null; then
+    echo "[INFO] pyenv not found. Installing pyenv..."
+
+    # Install pyenv via pyenv-installer
+    curl -fsSL https://pyenv.run | bash
+
+    # Add pyenv to .bashrc if not already present
+    if ! grep -q 'pyenv init' ~/.bashrc; then
+        echo -e '\n# Pyenv initialization' >> ~/.bashrc
+        echo 'export PYENV_ROOT="$HOME/.pyenv"' >> ~/.bashrc
+        echo '[[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"' >> ~/.bashrc
+        echo 'eval "$(pyenv init - bash)"' >> ~/.bashrc
+        echo 'export PYENV_ROOT="$HOME/.pyenv"' >> ~/.profile
+        echo '[[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"' >> ~/.profile
+        echo 'eval "$(pyenv init - bash)"' >> ~/.profile
+        echo 'export PYENV_ROOT="$HOME/.pyenv"' >> ~/.bash_profile
+        echo '[[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"' >> ~/.bash_profile
+        echo 'eval "$(pyenv init - bash)"' >> ~/.bash_profile
+    fi
+
+    echo "[INFO] pyenv has been installed. Please restart your terminal or run 'source ~/.bashrc' to finalize the installation."
+fi
+
 # Step 2: Load pyenv (IMPORTANT for script usage)
 export PYENV_ROOT="$HOME/.pyenv"
 export PATH="$PYENV_ROOT/bin:$PATH"
+eval "$(pyenv init --path)"
+eval "$(pyenv init -)"
 
 if command -v pyenv >/dev/null 2>&1; then
     eval "$(pyenv init --path)"
