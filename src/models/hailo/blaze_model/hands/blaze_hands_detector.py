@@ -129,16 +129,32 @@ class BlazeHandsDetector(BlazeDetectorBase):
         outputs = self.engine.run_all(image_tensor, self.hef_id)
 
         # The output will give us something like this
-        #   Output face_detection_full_range/conv49 UINT8, FCR(48x48x16)
-        #   Output face_detection_full_range/conv48 UINT8, FCR(48x48x1)
+        #   Output palm_detection_full/conv29 UINT8, FCR(12x12x6)
+        #   Output palm_detection_full/conv34 UINT8, FCR(24x24x2)
+        #   Output palm_detection_full/conv30 UINT8, FCR(12x12x108)
+        #   Output palm_detection_full/conv35 UINT8, FCR(24x24x36)
         # And we dont want that
 
         output1 = outputs[self.output_vstream_infos[0].name]
         output2 = outputs[self.output_vstream_infos[1].name]
 
         # Reshape to match what mediapipe postprocess expects from hailo
-        out1 = output2.reshape(1, 2304, 1).astype(np.float32)
-        out2 = output1.reshape(1, 2304, 16).astype(np.float32)
+        conv_12_12_6 = outputs[self.output_vstream_infos[0].name]
+        conv_1_24_24_2 = outputs[self.output_vstream_infos[1].name]
+        
+        reshape_1_1152_1 = conv_1_24_24_2.reshape(1,1152,1)
+        reshape_1_864_1 = conv_12_12_6.reshape(1,864,1)
+        concat_1_2016_1 = np.concatenate((reshape_1_1152_1,reshape_1_864_1),axis=1)
+        
+        conv_12_12_108 = outputs[self.output_vstream_infos[2].name]
+        conv_1_24_24_36 = outputs[self.output_vstream_infos[3].name]
+
+        reshape_1_1152_18 = conv_1_24_24_36.reshape(1,1152,18)
+        reshape_1_864_18 = conv_12_12_108.reshape(1,864,18)
+        concat_1_2016_18 = np.concatenate((reshape_1_1152_18,reshape_1_864_18),axis=1)
+
+        out1 = concat_1_2016_1.astype(np.float32)
+        out2 = concat_1_2016_18.astype(np.float32)
 
         # Postprocess the raw predictions:
         detections = self.tensors_to_detections(out2, out1, self.anchors)
