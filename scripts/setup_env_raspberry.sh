@@ -34,6 +34,11 @@ else
     exit 1
 fi
 
+# Install dependencies for building Python
+sudo apt install -y make build-essential libssl-dev zlib1g-dev \
+    libbz2-dev libreadline-dev libsqlite3-dev wget curl llvm \
+    libncursesw5-dev xz-utils tk-dev libxml2-dev libxmlsec1-dev libffi-dev liblzma-dev git
+
 # Step 3: Install desired Python version if not installed
 if ! pyenv versions --bare | grep -q "^${PYTHON_VERSION}\$"; then
     echo "[INFO] Python $PYTHON_VERSION is not installed. Installing with pyenv..."
