@@ -25,11 +25,6 @@ sudo apt update
 if ! command -v pyenv &> /dev/null; then
     echo "[INFO] pyenv not found. Installing pyenv..."
 
-    # Install dependencies for building Python
-    sudo apt install -y make build-essential libssl-dev zlib1g-dev \
-    libbz2-dev libreadline-dev libsqlite3-dev wget curl llvm \
-    libncursesw5-dev xz-utils tk-dev libxml2-dev libxmlsec1-dev libffi-dev liblzma-dev git
-
     # Install pyenv via pyenv-installer
     curl -fsSL https://pyenv.run | bash
 
