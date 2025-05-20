@@ -35,10 +35,6 @@ class BlazeFaceDetector(BlazeDetectorBase):
         """
         self.hef_id = self.engine.load_model(model_path)
         self.hef = self.engine.hef_list[self.hef_id]
-        self.network_group = self.engine.network_group_list[self.hef_id]
-        self.network_group_params = self.engine.network_group_params_list[self.hef_id]
-        self.input_vstreams_params = self.engine.input_vstreams_params_list[self.hef_id]
-        self.output_vstreams_params = self.engine.output_vstreams_params_list[self.hef_id]
 
         # Define dataset params
         self.input_vstream_infos = self.hef.get_input_vstream_infos()
