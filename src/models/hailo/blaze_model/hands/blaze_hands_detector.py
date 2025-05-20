@@ -33,6 +33,7 @@ class BlazeHandsDetector(BlazeDetectorBase):
             Path to the inference pipeline configuration file.
         """
         self.hef_id = self.engine.load_model(model_path)
+        self.hef = self.engine.hef_list[self.hef_id]
 
         # Define dataset params
         self.input_vstream_infos = self.hef.get_input_vstream_infos()
