@@ -42,7 +42,8 @@ if ! command -v pyenv &> /dev/null; then
         echo 'eval "$(pyenv init - bash)"' >> ~/.bash_profile
     fi
 
-    echo "[INFO] pyenv has been installed. Please restart your terminal or run 'source ~/.bashrc' to finalize the installation."
+    echo "[INFO] pyenv has been installed. Please restart your terminal by 'exec $SHELL' or run 'source ~/.bashrc' to finalize the installation."
+    exit 0
 fi
 
 # Step 2: Load pyenv (IMPORTANT for script usage)
@@ -76,7 +77,7 @@ echo "[INFO] Setting Python $PYTHON_VERSION for this shell session..."
 pyenv shell "$PYTHON_VERSION"
 
 # Step 5: Confirm Python version
-PY_VERSION=$(python --version)
+PY_VERSION=$(python3 --version)
 echo "[INFO] Current Python version: $PY_VERSION"
 
 # Step 6: Install libcamera system packages
@@ -88,7 +89,7 @@ if [ -d "$VENV_DIR" ]; then
     echo "[INFO] Virtual environment already exists. Skipping creation."
 else
     echo "[INFO] Creating virtual environment with system site packages..."
-    python -m venv --system-site-packages "$VENV_DIR"
+    python3 -m venv --system-site-packages "$VENV_DIR"
 fi
 
 # Step 8: Activate virtual environment
