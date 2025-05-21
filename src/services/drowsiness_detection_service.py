@@ -3,7 +3,6 @@ import time
 import cv2
 import numpy as np
 import threading
-from functools import partial
 
 from src.lib.drowsiness_detection import DrowsinessDetection
 from src.lib.hands_detection import HandsDetection
@@ -15,7 +14,7 @@ from src.utils.drawing_utils import (
     draw_fps,
     draw_head_pose_direction,
 )
-from hardware.factory_hardware import (
+from src.hardware.factory_hardware import (
     get_camera,
     get_buzzer
 )
@@ -200,9 +199,10 @@ class DrowsinessDetectionService:
                         self.drowsiness_notification_flag_sent = True
 
                 else:
-                    duration = time.time() - self.drowsiness_start_time
-                    logging_default.info(f"Driver regained alertness after {duration:.2f} seconds of drowsiness.")
-
+                    if self.drowsiness_start_time is not None:
+                        duration = time.time() - self.drowsiness_start_time
+                        logging_default.info(f"Driver regained alertness after {duration:.2f} seconds of drowsiness.")
+                    
                     self.drowsiness_start_time = None
                     self.drowsiness_notification_flag_sent = False
                     self.stop_buzzer()
