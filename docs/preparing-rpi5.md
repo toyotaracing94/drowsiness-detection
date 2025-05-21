@@ -63,11 +63,7 @@ Once you've enabled it, reboot your Raspberry Pi. And that's it! For further doc
 #### Using the GPIO Pin of Raspberry Pi 5
 So, to be able to use the IO Pins that Raspberry Pi 5 have, we have to do some extra steps. If you try for now currently using the `RPi.GPIO`, the RPi.GPIO doesn't support the Raspberry Pi 5, so we have to do some hacks to be able to use them, especially using them through Python code. This has been discussed [here](https://github.com/gpiozero/gpiozero/issues/1172). To use them, we can use the alternative, which is the [gpiozero](https://gpiozero.readthedocs.io/en/stable/index.html) package. The steps to install and use them in Python are explained [here](https://raspberrypi.stackexchange.com/questions/40105/access-gpio-pins-without-root-no-access-to-dev-mem-try-running-as-root). We can do this by
 
-```bash
-sudo rpi-update
-```
-
-and then install gpiozero and lgpio dependencies
+By install gpiozero and lgpio dependencies
 ```bash
 sudo apt install python3-gpiozero python3-lgpio
 ```
