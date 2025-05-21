@@ -4,7 +4,7 @@ from src.utils.logging import logging_default
 
 
 class RaspberyBuzzer:
-    def __init__(self, pin):
+    def __init__(self, pin:int = 23):
         self.pin = pin
         self.setup()
 
