@@ -7,10 +7,10 @@ echo =============================================
 REM Go up one level to the project root
 cd /d "%~dp0.."
 
-REM Check if Python 3.10 is installed
-py -3.10 --version >nul 2>&1
+REM Check if Python 3.11 is installed
+py -3.11 --version >nul 2>&1
 if %errorlevel% neq 0 (
-    echo [INFO] Python 3.10 not found. Trying default Python...
+    echo [INFO] Python 3.11 not found. Trying default Python...
     python --version >nul 2>&1
     if %errorlevel% neq 0 (
         echo [ERROR] Python is not installed or not added to PATH.
@@ -18,8 +18,8 @@ if %errorlevel% neq 0 (
     )
     python -m venv venv
 ) else (
-    echo [INFO] Python 3.10 found. Using it to create virtual environment...
-    py -3.10 -m venv venv
+    echo [INFO] Python 3.11 found. Using it to create virtual environment...
+    py -3.11 -m venv venv
 )
 
 REM Check if venv was created

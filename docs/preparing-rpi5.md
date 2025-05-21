@@ -36,7 +36,7 @@ In this project, we use the Raspberry Pi Camera 5MP OV5647 Lensa Wide Angle +IR 
 For using the Raspberry Pi Camera, Raspberry Pi OS provides a package called `picamera` to interact with the camera module. This is a Python binding for controlling the camera.
 
 #### Update System Packages
-Before installing the camera library, it's important to make sure that your system packages are up to date. Run the following commands:
+Before installing the camera library, it's important to make sure that your system packages are up to date and the system use the recent kernel. Run the following commands:
 
 ```bash
 sudo apt update
@@ -58,6 +58,20 @@ sudo raspi-config
 Navigate to Interfacing Options > Camera, then select Yes to enable the camera.
 
 Once you've enabled it, reboot your Raspberry Pi. And that's it! For further documentation, see their [official github](https://github.com/raspberrypi/picamera2) for the installation.
+
+
+#### Using the GPIO Pin of Raspberry Pi 5
+So, to be able to use the IO Pins that Raspberry Pi 5 have, we have to do some extra steps. If you try for now currently using the `RPi.GPIO`, the RPi.GPIO doesn't support the Raspberry Pi 5, so we have to do some hacks to be able to use them, especially using them through Python code. This has been discussed [here](https://github.com/gpiozero/gpiozero/issues/1172). To use them, we can use the alternative, which is the [gpiozero](https://gpiozero.readthedocs.io/en/stable/index.html) package. The steps to install and use them in Python are explained [here](https://raspberrypi.stackexchange.com/questions/40105/access-gpio-pins-without-root-no-access-to-dev-mem-try-running-as-root). We can do this by
+
+By install gpiozero and lgpio dependencies
+```bash
+sudo apt install python3-gpiozero python3-lgpio
+```
+
+if it's still not working, maybe make sure you are a member of the gpio group. But do this as the last resort
+```bash
+sudo adduser pi gpio
+```
 
 ### Install Hailo Software
 The most easiest way to installing the package needed to run the Hailo is by following the instructions on [Raspberry Pi's official AI Software Guide](https://www.raspberrypi.com/documentation/computers/ai.html#getting-started). This is by running the following command from a terminal window:
