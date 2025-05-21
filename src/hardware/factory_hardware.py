@@ -15,8 +15,8 @@ def get_camera():
 
 def get_buzzer():
     if os.name == "posix":
-        from src.hardware.buzzer.rpi_buzzer import RaspberyBuzzer
-        return RaspberyBuzzer()
+        from src.hardware.buzzer.rpi_buzzer import RaspberryBuzzer
+        return RaspberryBuzzer()
     else:
         from src.hardware.buzzer.windows_buzzer import WindowsBuzzer
         return WindowsBuzzer()
