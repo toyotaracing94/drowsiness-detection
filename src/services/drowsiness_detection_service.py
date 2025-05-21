@@ -100,6 +100,7 @@ class DrowsinessDetectionService:
         self.keep_beeping = False
         self.buzzer_function = None
         self.drowsiness_stage = None
+        self.buzzer.cleanup()
     
     def buzzer_loop(self):
         """

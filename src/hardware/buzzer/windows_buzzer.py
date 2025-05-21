@@ -60,6 +60,9 @@ class WindowsBuzzer:
         """
         self.beep(1, 1000, 0.1)
 
+    def cleanup(self):
+        pass
+
     
 
     
