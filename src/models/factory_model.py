@@ -3,7 +3,9 @@ import os
 hailo_inference_engine = None
 if os.name == "posix":
     try:
-        from src.models.hailo.hailo_runtime.hailo_inference_engine import HailoInferenceEngine
+        from src.models.hailo.hailo_runtime.hailo_inference_engine import (
+            HailoInferenceEngine,
+        )
         hailo_inference_engine = HailoInferenceEngine()
     except ImportError:
         hailo_inference_engine = None

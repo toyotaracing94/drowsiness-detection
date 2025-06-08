@@ -3,6 +3,7 @@ import numpy as np
 from src.models.hailo.blaze_model.blaze_landmark_base import BlazeLandmarkBase
 from src.models.hailo.hailo_runtime.hailo_inference_engine import HailoInferenceEngine
 
+
 class BlazeHandsLandmark(BlazeLandmarkBase):
     """
     BlazeHandsLandmark performs Hands landmark regression using a precompiled Hailo model.

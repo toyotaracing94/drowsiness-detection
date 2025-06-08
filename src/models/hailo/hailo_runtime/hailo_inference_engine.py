@@ -188,7 +188,6 @@ class HailoInferenceEngine():
         input_vstreams_params = self.input_vstreams_params_list[hef_id]
         output_vstreams_params = self.output_vstreams_params_list[hef_id]
         input_vstream_info = self.input_vstream_info_list[hef_id]
-        output_vstream_info = self.output_vstream_info_list[hef_id]
 
         output = None
         with InferVStreams(network_group, input_vstreams_params, output_vstreams_params) as infer_pipeline:

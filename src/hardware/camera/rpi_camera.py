@@ -1,8 +1,11 @@
 import numpy as np
 from picamera2 import Picamera2
+
+from src.hardware.camera.base_camera import BaseCamera
 from src.utils.logging import logging_default
 
-class RPiCamera():
+
+class RPiCamera(BaseCamera):
     def __init__(self):
         self.picam2 = Picamera2()
         self.picam2.start()

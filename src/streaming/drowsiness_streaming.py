@@ -2,9 +2,8 @@ import cv2
 
 from src.services.drowsiness_detection_service import DrowsinessDetectionService
 
-drowsiness_service = DrowsinessDetectionService()
 
-def generate_original_capture_stream():
+def stream_raw_camera_feed(drowsiness_service : DrowsinessDetectionService):
     """
     This function special for the FastAPI backend controller to continuously captures frames from the camera
     and return a stream for real-time display transmission
@@ -25,7 +24,7 @@ def generate_original_capture_stream():
         yield (b'--frame\r\n'
                b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
         
-def generate_drowsiness_stream():
+def stream_processed_drowsiness_feed(drowsiness_service : DrowsinessDetectionService):
     """
     This function special for the FastAPI backend controller to continuously captures frames from the camera, processes them for drowsiness detection, 
     and generates back a video stream with annotated landmarks and detection results.

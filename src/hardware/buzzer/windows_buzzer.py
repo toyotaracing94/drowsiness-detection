@@ -1,8 +1,11 @@
 import winsound
 from time import sleep
-from src.utils.logging import logging_default 
 
-class WindowsBuzzer:
+from src.hardware.buzzer.base_buzzer import BaseBuzzer
+from src.utils.logging import logging_default
+
+
+class WindowsBuzzer(BaseBuzzer):
     def __init__(self):
         self.setup()
 

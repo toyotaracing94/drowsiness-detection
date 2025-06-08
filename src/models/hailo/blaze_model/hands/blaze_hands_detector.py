@@ -3,6 +3,7 @@ import numpy as np
 from src.models.hailo.blaze_model.blaze_detector_base import BlazeDetectorBase
 from src.models.hailo.hailo_runtime.hailo_inference_engine import HailoInferenceEngine
 
+
 class BlazeHandsDetector(BlazeDetectorBase):
     """
     BlazeFaceDetector performs hands detection using a precompiled Hailo model 
@@ -134,9 +135,6 @@ class BlazeHandsDetector(BlazeDetectorBase):
         #   Output palm_detection_full/conv30 UINT8, FCR(12x12x108)
         #   Output palm_detection_full/conv35 UINT8, FCR(24x24x36)
         # And we dont want that
-
-        output1 = outputs[self.output_vstream_infos[0].name]
-        output2 = outputs[self.output_vstream_infos[1].name]
 
         # Reshape to match what mediapipe postprocess expects from hailo
         conv_12_12_6 = outputs[self.output_vstream_infos[0].name]

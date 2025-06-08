@@ -1,45 +1,42 @@
+import threading
 import time
 
 import cv2
 import numpy as np
-import threading
 
+from src.hardware.buzzer.base_buzzer import BaseBuzzer
+from src.hardware.camera.base_camera import BaseCamera
 from src.lib.drowsiness_detection import DrowsinessDetection
 from src.lib.hands_detection import HandsDetection
 from src.lib.phone_detection import PhoneDetection
 from src.lib.socket_trigger import SocketTrigger
-from src.utils.logging import logging_default
 from src.utils.drawing_utils import (
-    draw_landmarks,
     draw_fps,
     draw_head_pose_direction,
+    draw_landmarks,
 )
-from src.hardware.factory_hardware import (
-    get_camera,
-    get_buzzer
-)
-
 from src.utils.landmark_constants import (
-    LEFT_EYE_CONNECTIONS,
-    RIGHT_EYE_CONNECTIONS,
-    LEFT_EYEBROW_CONNECTIONS,
-    RIGHT_EYEBROW_CONNECTIONS,
-    OUTER_LIPS_CONNECTIONS,
-    INNER_LIPS_CONNECTIONS,
-    HAND_CONNECTIONS,
     BODY_POSE_FACE_CONNECTIONS,
-
-    LEFT_EYE_POINTS,
-    RIGHT_EYE_POINTS,
-    OUTER_LIPS_POINTS,
+    HAND_CONNECTIONS,
     HEAD_POSE_POINTS,
-    MIDDLE_POINTS
+    INNER_LIPS_CONNECTIONS,
+    LEFT_EYE_CONNECTIONS,
+    LEFT_EYE_POINTS,
+    LEFT_EYEBROW_CONNECTIONS,
+    MIDDLE_POINTS,
+    OUTER_LIPS_CONNECTIONS,
+    OUTER_LIPS_POINTS,
+    RIGHT_EYE_CONNECTIONS,
+    RIGHT_EYE_POINTS,
+    RIGHT_EYEBROW_CONNECTIONS,
 )
+from src.utils.logging import logging_default
+
 
 class DrowsinessDetectionService:
-    def __init__(self):
-        self.camera = get_camera()
-        self.buzzer = get_buzzer()
+    def __init__(self, camera : BaseCamera , buzzer : BaseBuzzer):
+        self.camera = camera
+        self.buzzer = buzzer
         self.socket_trigger = SocketTrigger("config/api_settings.json")
         self.drowsiness_detector = DrowsinessDetection("config/drowsiness_detection_settings.json")
         self.phone_detection = PhoneDetection("config/pose_detection_settings.json")

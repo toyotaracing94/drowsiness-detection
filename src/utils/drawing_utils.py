@@ -1,5 +1,6 @@
 import cv2
 
+
 def draw_landmarks(image, landmarks, connections, color_lines=(0, 255, 0), color_points=(0, 255, 0), size=1):
     """
     Draws lines between specified pairs of normalized landmarks.
@@ -49,7 +50,6 @@ def draw_head_pose_direction(image, face_landmark, x_angle, y_angle, color=(0, 0
     
     # Draw the arrowed line
     cv2.arrowedLine(image, p1, p2, color, thickness=2, tipLength=0.3)
-
 
 def draw_fps(image, fps_text : str, font_scale : int = 0.7, color=(0, 255, 255), thickness : int = 2, padding : int = 10):
     # Get the text size
