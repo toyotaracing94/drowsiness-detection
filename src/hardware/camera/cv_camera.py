@@ -7,6 +7,7 @@ from src.utils.logging import logging_default
 
 class CVCamera(BaseCamera):
     def __init__(self, cam_index=0):
+        logging_default.info("Setting up the camera")
         self.cap = cv2.VideoCapture(cam_index)
 
     def get_capture(self) -> np.ndarray:

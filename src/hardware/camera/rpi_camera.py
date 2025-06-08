@@ -7,6 +7,7 @@ from src.utils.logging import logging_default
 
 class RPiCamera(BaseCamera):
     def __init__(self):
+        logging_default.info("Setting up the camera")
         self.picam2 = Picamera2()
         self.picam2.start()
 

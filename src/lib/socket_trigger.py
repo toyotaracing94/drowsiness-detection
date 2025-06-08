@@ -36,9 +36,14 @@ class SocketTrigger:
         self.device_name = config["device"]
         self.send_to_server = config["send_to_server"]
 
-        
         # Construct the WebSocket URL
         self.ws_url = f"ws://{self.server_ip}?vehicle_id={self.vehicle_id}&device={self.device_name}"
+
+        logging_default.info(
+            "Loaded config - Vehicle ID: %s, Server: %s, Device: %s, Send to Server: %s, WS URL: %s",
+            self.vehicle_id, self.server_ip, self.device_name,
+            self.send_to_server, self.ws_url
+        )
 
     def save_image(self, image : np.ndarray, event, target : str = '', ws_event : str = '') -> None:
         """

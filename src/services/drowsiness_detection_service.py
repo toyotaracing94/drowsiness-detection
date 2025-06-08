@@ -35,6 +35,8 @@ from src.utils.logging import logging_default
 
 class DrowsinessDetectionService:
     def __init__(self, camera : BaseCamera , buzzer : BaseBuzzer):
+        logging_default.info("Initiated Drowsiness Services")
+
         self.camera = camera
         self.buzzer = buzzer
         self.socket_trigger = SocketTrigger("config/api_settings.json")

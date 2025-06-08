@@ -1,30 +1,31 @@
+import time
+
 import cv2
 
-from src.services.drowsiness_detection_service import DrowsinessDetectionService
+from src.utils.frame_buffer import FrameBuffer
 
 
-def stream_raw_camera_feed(drowsiness_service : DrowsinessDetectionService):
+def stream_raw_camera_feed(frame_buffer : FrameBuffer):
     """
     This function special for the FastAPI backend controller to continuously captures frames from the camera
     and return a stream for real-time display transmission
     """
     while True:
-        # Capture the video stream
-        ret, frame = drowsiness_service.camera.get_capture()
-        frame = cv2.flip(frame, 1)
-        if not ret:
-            break
+        frame = frame_buffer.get_raw()
+        if frame is None:
+            time.sleep(0.05)
+            continue
 
-        # Encode the frame as JPEG
         success, buffer = cv2.imencode('.jpg', frame)
         if not success:
             continue
 
-        frame_bytes = buffer.tobytes()
         yield (b'--frame\r\n'
-               b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
+               b'Content-Type: image/jpeg\r\n\r\n' + buffer.tobytes() + b'\r\n')
+
+        time.sleep(0.03)
         
-def stream_processed_drowsiness_feed(drowsiness_service : DrowsinessDetectionService):
+def stream_processed_drowsiness_feed(frame_buffer : FrameBuffer):
     """
     This function special for the FastAPI backend controller to continuously captures frames from the camera, processes them for drowsiness detection, 
     and generates back a video stream with annotated landmarks and detection results.
@@ -43,18 +44,16 @@ def stream_processed_drowsiness_feed(drowsiness_service : DrowsinessDetectionSer
     """
     while True:
         # Capture the video stream
-        ret, frame = drowsiness_service.camera.get_capture()
-        if not ret:
-            break
-        frame = cv2.flip(frame, 1)
+        frame = frame_buffer.get_processed()
+        if frame is None:
+            time.sleep(0.05)
+            continue
 
-        # Process each frame to check the drowsiness detection process
-        processed_image = drowsiness_service.process_frame(frame)
-
-        # Encode the frame as JPEG
-        success, buffer = cv2.imencode('.jpg', processed_image)
+        success, buffer = cv2.imencode('.jpg', frame)
         if not success:
             continue
 
         yield (b'--frame\r\n'
                b'Content-Type: image/jpeg\r\n\r\n' + buffer.tobytes() + b'\r\n')
+
+        time.sleep(0.03)
