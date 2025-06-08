@@ -13,7 +13,7 @@ def stream_raw_camera_feed(frame_buffer : FrameBuffer):
     while True:
         frame = frame_buffer.get_raw()
         if frame is None:
-            time.sleep(0.05)
+            time.sleep(0.03)
             continue
 
         success, buffer = cv2.imencode('.jpg', frame)
@@ -46,7 +46,7 @@ def stream_processed_drowsiness_feed(frame_buffer : FrameBuffer):
         # Capture the video stream
         frame = frame_buffer.get_processed()
         if frame is None:
-            time.sleep(0.05)
+            time.sleep(0.03)
             continue
 
         success, buffer = cv2.imencode('.jpg', frame)
