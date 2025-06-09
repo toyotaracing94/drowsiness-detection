@@ -2,9 +2,13 @@ import threading
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
+from src.lib.socket_trigger import SocketTrigger
 from src.routers import drowsiness_router, app_version, buzzer_router
 from src.services.drowsiness_detection_service import DrowsinessDetectionService
-from src.tasks.detection_loop import detection_loop
+from src.services.phone_detection_service import PhoneDetectionService
+from src.services.hand_detection_service import HandsDetectionService
+
+from src.tasks.detection_task import DetectionTask
 from src.utils.frame_buffer import FrameBuffer
 from src.utils.logging import logging_default
 
@@ -13,11 +17,17 @@ from src.hardware.factory_hardware import (
     get_buzzer
 )
 
-# Building Services
+# Building Services and Hardware connection
 logging_default.info("Building services and initiated hardwares")
+socket_trigger = SocketTrigger("config/api_settings.json")
 camera = get_camera()
 buzzer = get_buzzer()
-drowsiness_service = DrowsinessDetectionService(camera, buzzer)
+
+drowsiness_service = DrowsinessDetectionService(buzzer, socket_trigger)
+phone_detection_service = PhoneDetectionService(socket_trigger)
+hand_service = HandsDetectionService(socket_trigger)
+
+detection_task = DetectionTask("config/pipeline_settings.json")
 
 # Create shared frame buffer
 frame_buffer = FrameBuffer()
@@ -27,8 +37,8 @@ async def lifespan(app: FastAPI):
     # Start detection loop thread that will run the drowsiness service on app startup
     # source = https://stackoverflow.com/questions/70872276/fastapi-python-how-to-run-a-thread-in-the-background 
     detection_thread = threading.Thread(
-        target=detection_loop,
-        args=(drowsiness_service, frame_buffer),
+        target=detection_task.detection_loop,
+        args=(drowsiness_service, phone_detection_service, hand_service, camera, frame_buffer),
         daemon=True
     )
     detection_thread.start()
@@ -40,7 +50,11 @@ async def lifespan(app: FastAPI):
 
 # Define Fast API App
 logging_default.info("Run webApp")
-app = FastAPI(lifespan=lifespan)
+app = FastAPI(
+    title="Drowsiness Detection System",
+    description="This page contains detailed info of drowsiness detection system by Capability Center Division Program",
+    lifespan=lifespan
+)
 
 # Register router
 logging_default.info("Registering API routers")

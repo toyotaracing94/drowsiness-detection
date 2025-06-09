@@ -1,0 +1,5 @@
+{
+    "drowsiness_model_run" : true,
+    "phone_detection_model_run" : false,
+    "hands_detection_model_run" : false
+}
