@@ -1,6 +1,7 @@
 import threading
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from src.lib.socket_trigger import SocketTrigger
 from src.routers import drowsiness_router, app_version, buzzer_router
@@ -54,6 +55,17 @@ app = FastAPI(
     title="Drowsiness Detection System",
     description="This page contains detailed info of drowsiness detection system by Capability Center Division Program",
     lifespan=lifespan
+)
+
+origins = [
+    "*"
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # Register router
