@@ -184,7 +184,7 @@ class DrowsinessDetectionService:
                 if self.drowsiness_detector.check_yawning(mar):
                     cv2.putText(processed_frame, "Yawning!", (50, 80), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 255), 2)
 
-                    if not self.drowsiness_notification_flag_sent:
+                    if not self.yawning_notification_flag_sent:
                         logging_default.info("Driver appears to be yawning. Triggering notification.")
                         self.socket_trigger.save_image(processed_frame, 'DROWSINESS', '', 'UPLOAD_IMAGE')
                         self.yawning_notification_flag_sent = True
