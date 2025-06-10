@@ -2,6 +2,8 @@ import threading
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from src.settings.app_config import settings
 
 from src.lib.socket_trigger import SocketTrigger
 from src.routers import drowsiness_router, app_version, buzzer_router
@@ -20,7 +22,7 @@ from src.hardware.factory_hardware import (
 
 # Building Services and Hardware connection
 logging_default.info("Building services and initiated hardwares")
-socket_trigger = SocketTrigger("config/api_settings.json")
+socket_trigger = SocketTrigger(settings.ApiSettings)
 camera = get_camera()
 buzzer = get_buzzer()
 
@@ -28,7 +30,7 @@ drowsiness_service = DrowsinessDetectionService(buzzer, socket_trigger)
 phone_detection_service = PhoneDetectionService(socket_trigger)
 hand_service = HandsDetectionService(socket_trigger)
 
-detection_task = DetectionTask("config/pipeline_settings.json")
+detection_task = DetectionTask(settings.PipelineSettings)
 
 # Create shared frame buffer
 frame_buffer = FrameBuffer()
@@ -60,13 +62,13 @@ app = FastAPI(
 origins = [
     "*"
 ]
-
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # Register router
 logging_default.info("Registering API routers")

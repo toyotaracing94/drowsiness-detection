@@ -1,4 +1,3 @@
-import json
 import time
 
 import cv2
@@ -7,22 +6,20 @@ from src.hardware.camera.base_camera import BaseCamera
 from src.services.drowsiness_detection_service import DrowsinessDetectionService
 from src.services.hand_detection_service import HandsDetectionService
 from src.services.phone_detection_service import PhoneDetectionService
+from src.settings.app_config import PipelineSettings
 from src.utils.drawing_utils import draw_fps
 from src.utils.frame_buffer import FrameBuffer
 from src.utils.logging import logging_default
 
 
 class DetectionTask:
-    def __init__(self, pipeline_config : str):
+    def __init__(self, pipeline_config : PipelineSettings):
         self.load_configuration(pipeline_config)
 
-    def load_configuration(self, path : str):
-        with open(path, 'r') as f:
-            config = json.load(f)
-
-        self.drowsiness_model_run = config["drowsiness_model_run"]
-        self.phone_detection_model_run = config["phone_detection_model_run"]
-        self.hands_detection_model_run = config["hands_detection_model_run"]
+    def load_configuration(self, config : PipelineSettings):
+        self.drowsiness_model_run = config.drowsiness_model_run
+        self.phone_detection_model_run = config.phone_detection_model_run
+        self.hands_detection_model_run = config.hands_detection_model_run
 
         logging_default.info(
             "Loaded config - drowsiness_model_run: %s, phone_detection_model_run: %s, hands_detection_model_run: %s",

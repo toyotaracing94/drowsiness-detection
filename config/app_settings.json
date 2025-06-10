@@ -1,0 +1,16 @@
+{
+    "PipelineSettings" : {
+        "drowsiness_model_run" : true,
+        "phone_detection_model_run" : false,
+        "hands_detection_model_run" : false
+    },
+    "ConnectionStrings" : {
+        "db_connections" : "activities.db"
+    },
+    "ApiSettings" : {
+        "vehicle_id" : "1HGCM82633A123456",
+        "server" : "203.100.57.59:3100",
+        "device" : "jetson",
+        "send_to_server": true
+    }
+}

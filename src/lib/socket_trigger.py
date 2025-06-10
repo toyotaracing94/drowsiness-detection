@@ -8,6 +8,7 @@ import cv2
 import numpy as np
 from websockets.sync.client import connect
 
+from src.settings.app_config import ApiSettings
 from src.utils.logging import logging_default
 
 
@@ -18,7 +19,7 @@ class SocketTrigger:
         self.load_configurations(api_settings_path)
 
 
-    def load_configurations(self, path : str) -> None:
+    def load_configurations(self, api_settings: ApiSettings) -> None:
         """
         Load the detection settings from a configuration JSON file.
 
@@ -28,14 +29,11 @@ class SocketTrigger:
             Path to the configuration file containing api settings to save the triggered event image.
         """ 
         logging_default.info("Loading api configs and model configuration")
-        
-        with open(path, 'r') as f:
-            config = json.load(f)
-        
-        self.vehicle_id = config["vehicle_id"]
-        self.server_ip = config["server"]
-        self.device_name = config["device"]
-        self.send_to_server = config["send_to_server"]
+                
+        self.vehicle_id = api_settings.vehicle_id
+        self.server_ip = api_settings.server
+        self.device_name = api_settings.device
+        self.send_to_server = api_settings.send_to_server
 
         # Construct the WebSocket URL
         self.ws_url = f"ws://{self.server_ip}?vehicle_id={self.vehicle_id}&device={self.device_name}"
@@ -72,15 +70,15 @@ class SocketTrigger:
         try:
             # Log the beginning of the process
             logging_default.info(f"Saving image for event: {event}, target: {target}, websocket event: {ws_event}")
-            os.makedirs("image_event", exist_ok=True)
+            os.makedirs("static/image_event", exist_ok=True)
 
             if self.send_to_server:
                 with connect(self.ws_url) as websocket: 
                     # Save the file in the local system
                     timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-                    cv2.imwrite(f"image_event/frame{timestamp}.jpg", image)
+                    cv2.imwrite(f"static/image_event/frame{timestamp}.jpg", image)
 
-                    with open(f"image_event/frame{timestamp}.jpg", "rb") as image_file:
+                    with open(f"static/image_event/frame{timestamp}.jpg", "rb") as image_file:
                         encoded_string = base64.b64encode(image_file.read())
                         json_data = {
                             "event" : ws_event,
