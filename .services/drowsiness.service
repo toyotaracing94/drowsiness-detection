@@ -5,8 +5,8 @@ After=network.target
 [Service]
 User=root
 Group=root
-WorkingDirectory=/opt/drowsiness_detection
-ExecStart=/opt/drowsiness_detection/scripts/start.sh
+WorkingDirectory=/opt/drowsiness-detection
+ExecStart=/opt/drowsiness-detection/scripts/start.sh
 Restart=always
 RestartSec=5
 Environment=PYTHONUNBUFFERED=1
