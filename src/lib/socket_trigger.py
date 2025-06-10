@@ -2,6 +2,7 @@
 import base64
 import datetime
 import json
+import os
 
 import cv2
 import numpy as np
@@ -71,9 +72,10 @@ class SocketTrigger:
         try:
             # Log the beginning of the process
             logging_default.info(f"Saving image for event: {event}, target: {target}, websocket event: {ws_event}")
+            os.makedirs("image_event", exist_ok=True)
 
             if self.send_to_server:
-                with connect(self.ws_url) as websocket:
+                with connect(self.ws_url) as websocket: 
                     # Save the file in the local system
                     timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
                     cv2.imwrite(f"image_event/frame{timestamp}.jpg", image)
@@ -86,7 +88,7 @@ class SocketTrigger:
                             "target" : target,
                             "data" : {
                                 "message": "Image Upload",
-                                "image": "%s"%encoded_string,
+                                "image": encoded_string.decode("utf-8"),
                                 "behavior_type" : event
                             }
                         }

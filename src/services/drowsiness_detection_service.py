@@ -168,7 +168,7 @@ class DrowsinessDetectionService:
 
                     # Send the notification
                     if not self.drowsiness_notification_flag_sent:
-                        self.socket_trigger.save_image(processed_frame, 'DROWSINESS', '', 'UPLOAD_IMAGE')
+                        self.socket_trigger.save_image(frame, 'DROWSINESS', '', 'UPLOAD_IMAGE')
                         self.drowsiness_notification_flag_sent = True
 
                 else:
