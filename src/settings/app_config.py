@@ -15,6 +15,8 @@ class ApiSettings(BaseModel):
     vehicle_id: str
     server: str
     device: str
+    static_dir : str
+    image_event_dir : str
     send_to_server: bool
 
 class AppConfig(BaseModel):

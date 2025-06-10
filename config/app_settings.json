@@ -11,6 +11,8 @@
         "vehicle_id" : "1HGCM82633A123456",
         "server" : "203.100.57.59:3100",
         "device" : "jetson",
+        "static_dir" : "static",
+        "image_event_dir" : "image_event",
         "send_to_server": true
     }
 }

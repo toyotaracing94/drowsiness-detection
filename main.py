@@ -1,4 +1,5 @@
 import threading
+import os
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -68,6 +69,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+os.makedirs(settings.ApiSettings.static_dir, exist_ok=True)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # Register router

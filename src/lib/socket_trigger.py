@@ -34,6 +34,7 @@ class SocketTrigger:
         self.server_ip = api_settings.server
         self.device_name = api_settings.device
         self.send_to_server = api_settings.send_to_server
+        self.image_event_path = os.path.join(api_settings.static_dir, api_settings.image_event_dir)
 
         # Construct the WebSocket URL
         self.ws_url = f"ws://{self.server_ip}?vehicle_id={self.vehicle_id}&device={self.device_name}"
@@ -70,15 +71,15 @@ class SocketTrigger:
         try:
             # Log the beginning of the process
             logging_default.info(f"Saving image for event: {event}, target: {target}, websocket event: {ws_event}")
-            os.makedirs("static/image_event", exist_ok=True)
+            os.makedirs(self.image_event_path, exist_ok=True)
 
             if self.send_to_server:
                 with connect(self.ws_url) as websocket: 
                     # Save the file in the local system
                     timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-                    cv2.imwrite(f"static/image_event/frame{timestamp}.jpg", image)
+                    cv2.imwrite(f"{self.image_event_path}/frame{timestamp}.jpg", image)
 
-                    with open(f"static/image_event/frame{timestamp}.jpg", "rb") as image_file:
+                    with open(f"{self.image_event_path}/frame{timestamp}.jpg", "rb") as image_file:
                         encoded_string = base64.b64encode(image_file.read())
                         json_data = {
                             "event" : ws_event,
