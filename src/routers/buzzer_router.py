@@ -1,23 +1,29 @@
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel, Field
 
+from src.domain.dto.base_response import StandardResponse
+from src.domain.dto.buzzer_dto import BeepRequest
 from src.hardware.buzzer.base_buzzer import BaseBuzzer
 
 
 def buzzer_router(buzzer: BaseBuzzer):
     router = APIRouter()
 
-    class BeepRequest(BaseModel):
-        times: int = Field(..., gt=0, description="How many times to beep")
-        duration: int = Field(default=1000, gt=0, description="Duration of each beep in milliseconds")
-        pause: float = Field(..., ge=0.0, description="Pause between beeps in seconds")
-        frequency: int = Field(default=1000, ge=100, description="Frequency of the beep (ignored on some platforms)")
-
-    @router.post("/beep", summary="Trigger a buzzer beep")
+    @router.post(
+        "/beep", 
+        summary="Trigger a buzzer beep", 
+        response_model=StandardResponse,
+        description="""
+        Triggers the buzzer to beep a specified number of times, each with a defined 
+        duration, frequency, and pause interval between beeps.
+        """
+    )
     def trigger_beep(req: BeepRequest):
         try:
             buzzer.beep(req.times, req.duration, req.pause, req.frequency)
-            return {"status": "success", "message": f"Beeped {req.times} time(s)."}
+            return StandardResponse(
+                status="success",
+                message=f"Beeped {req.times} time(s)."
+            )
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Buzzer failed: {str(e)}")
 
