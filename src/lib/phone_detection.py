@@ -6,9 +6,9 @@ from src.models.factory_model import get_body_pose_model
 
 
 class PhoneDetection():
-    def __init__(self, model_settings_path : str, model_path: str = None):
+    def __init__(self, model_settings_path : str, model_path: str = None, inference_engine : str = None):
         
-        self.model = get_body_pose_model(model_settings_path, model_path)
+        self.model = get_body_pose_model(model_settings_path, model_path, inference_engine)
 
         # Landmarks (for now hardcoded)
         self.right_hand_landmark = [16, 22, 20, 18]

@@ -27,12 +27,12 @@ from src.utils.logging import logging_default
 
 
 class DrowsinessDetectionService:
-    def __init__(self, buzzer : BaseBuzzer, socket_trigger : SocketTrigger):
+    def __init__(self, buzzer : BaseBuzzer, socket_trigger : SocketTrigger, inference_engine : str = None):
         logging_default.info("Initiated Drowsiness Services")
 
         self.buzzer = buzzer
         self.socket_trigger = socket_trigger
-        self.drowsiness_detector = DrowsinessDetection("config/drowsiness_detection_settings.json")
+        self.drowsiness_detector = DrowsinessDetection("config/drowsiness_detection_settings.json", inference_engine=inference_engine)
 
         self.drowsiness_start_time = None
         self.yawning_start_time = None

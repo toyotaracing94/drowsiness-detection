@@ -9,13 +9,13 @@ from src.utils.logging import logging_default
 
 
 class DrowsinessDetection():
-    def __init__(self, model_settings_path : str):
+    def __init__(self, model_settings_path : str, model_path: str = None, inference_engine : str = None):
         
         # Load Configurations
         self.load_configuration(model_settings_path)
 
         # Get the model
-        self.model = get_face_model(model_settings_path)
+        self.model = get_face_model(model_settings_path, model_path, inference_engine)
 
         # Counter for the Yawn and Drowsiness
         self.drowsiness_frame_counter = 0

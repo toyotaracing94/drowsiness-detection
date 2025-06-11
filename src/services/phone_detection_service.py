@@ -12,10 +12,11 @@ from src.utils.logging import logging_default
 
 
 class PhoneDetectionService:
-    def __init__(self, socket_trigger : SocketTrigger):
+    def __init__(self, socket_trigger : SocketTrigger, inference_engine : str = None):
         logging_default.info("Initiated Phone Detection Service")
 
-        self.phone_detection = PhoneDetection("config/pose_detection_settings.json")
+        self.phone_detection = PhoneDetection("config/pose_detection_settings.json", inference_engine=inference_engine)
+        self.socket_trigger = socket_trigger
     
     def process_frame(self, frame : np.ndarray, processed_frame : np.ndarray) -> np.ndarray:
         """

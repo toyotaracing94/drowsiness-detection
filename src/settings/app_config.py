@@ -7,6 +7,7 @@ class PipelineSettings(BaseModel):
     drowsiness_model_run: bool
     phone_detection_model_run: bool
     hands_detection_model_run: bool
+    inference_engine : str
 
 class ConnectionStrings(BaseModel):
     db_connections: str

@@ -27,9 +27,9 @@ socket_trigger = SocketTrigger(settings.ApiSettings)
 camera = get_camera()
 buzzer = get_buzzer()
 
-drowsiness_service = DrowsinessDetectionService(buzzer, socket_trigger)
-phone_detection_service = PhoneDetectionService(socket_trigger)
-hand_service = HandsDetectionService(socket_trigger)
+drowsiness_service = DrowsinessDetectionService(buzzer, socket_trigger, settings.PipelineSettings.inference_engine)
+phone_detection_service = PhoneDetectionService(socket_trigger, settings.PipelineSettings.inference_engine)
+hand_service = HandsDetectionService(socket_trigger, settings.PipelineSettings.inference_engine)
 
 detection_task = DetectionTask(settings.PipelineSettings)
 
