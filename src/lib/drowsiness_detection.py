@@ -4,7 +4,28 @@ import math
 import cv2
 import numpy as np
 
+from src.domain.dto.drowsiness_detection_result import (
+    DrowsinessDetectionResult,
+    FaceDrowsinessState,
+)
 from src.models.factory_model import get_face_model
+from src.utils.drawing_utils import (
+    draw_face_bounding_box,
+    draw_head_pose_direction,
+    draw_landmarks,
+)
+from src.utils.landmark_constants import (
+    HEAD_POSE_POINTS,
+    INNER_LIPS_CONNECTIONS,
+    LEFT_EYE_CONNECTIONS,
+    LEFT_EYE_POINTS,
+    LEFT_EYEBROW_CONNECTIONS,
+    OUTER_LIPS_CONNECTIONS,
+    OUTER_LIPS_POINTS,
+    RIGHT_EYE_CONNECTIONS,
+    RIGHT_EYE_POINTS,
+    RIGHT_EYEBROW_CONNECTIONS,
+)
 from src.utils.logging import logging_default
 
 
@@ -354,18 +375,90 @@ class DrowsinessDetection():
         return False
 
     def euclidean_distance(self, point1 : list, point2 : list):
-            """
-            Calculate the absolute distance (euclidian distance) between two points pixel in single planar
+        """
+        Calculate the absolute distance (euclidian distance) between two points pixel in single planar
 
-            Parameters
-            ----------
-            point1 : list
-                The first point of feature
-            point2 : list
-                The second point of feature
+        Parameters
+        ----------
+        point1 : list
+            The first point of feature
+        point2 : list
+            The second point of feature
 
-            Return
-            ----------
-                The absolute distance between two points of the pixel in the image planar
-            """
-            return math.sqrt((point1[0] - point2[0]) ** 2 + (point1[1] - point2[1]) ** 2)
+        Return
+        ----------
+            The absolute distance between two points of the pixel in the image planar
+        """
+        return math.sqrt((point1[0] - point2[0]) ** 2 + (point1[1] - point2[1]) ** 2)
+    
+    def process_and_draw(self, original_frame : np.ndarray, processed_frame : np.ndarray) -> DrowsinessDetectionResult:
+        """
+        Calculating the result of the detection and draw the results
+        """
+        results = DrowsinessDetectionResult()
+
+        # Get the landmarks for the face
+        face_landmarks = self.detect_face_landmarks(original_frame)
+
+        # Drowsiness and pose detection
+        if face_landmarks:
+            face_id = 1
+
+            for face_landmark in face_landmarks:
+                face_result = FaceDrowsinessState()
+
+                x_angle, y_angle, _ = self.estimate_head_pose(original_frame, face_landmark,HEAD_POSE_POINTS)
+
+                direction_text = "Looking Forward"
+                if y_angle < -10: direction_text = "Looking Left"
+                elif y_angle > 10: direction_text = "Looking Right"
+                elif x_angle < -10: direction_text = "Looking Down"
+                elif x_angle > 10: direction_text = "Looking Up"
+
+                # Get the left-eye and right-eye landmark and mouth landmark
+                left_eye, right_eye = self.extract_eye_landmark(face_landmark, LEFT_EYE_POINTS, RIGHT_EYE_POINTS, original_frame.shape[1], original_frame.shape[0])
+                mouth = self.extract_mouth_landmark(face_landmark, OUTER_LIPS_POINTS, original_frame.shape[1], original_frame.shape[0])
+
+                # Calculate the EAR Ratio and MAR ratio to check drowsiness
+                ear = (self.calculate_ear(left_eye) + self.calculate_ear(right_eye)) / 2.0
+                mar = self.calculate_mar(mouth)
+
+                # Draw bounding box and get box coordinates
+                _, y_min, x_max, _ = draw_face_bounding_box(processed_frame, face_landmark, face_id)
+
+                # Check for drowsines
+                if self.check_drowsiness(ear):
+                    cv2.putText(processed_frame, "Drowsy!", (x_max + 10, y_min + 50), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
+                    face_result.is_drowsy = True
+
+                # Check for yawning
+                if self.check_yawning(mar):
+                    cv2.putText(processed_frame, "Yawning!", (x_max + 10, y_min + 70), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 0, 255), 2)
+                    face_result.is_yawning = True
+
+                # Draw the result of the eye drowsiness detection
+                if left_eye: 
+                    draw_landmarks(processed_frame, face_landmark, LEFT_EYE_CONNECTIONS)
+                    draw_landmarks(processed_frame, face_landmark, LEFT_EYEBROW_CONNECTIONS)
+
+                if right_eye:
+                    draw_landmarks(processed_frame, face_landmark, RIGHT_EYE_CONNECTIONS)
+                    draw_landmarks(processed_frame, face_landmark, RIGHT_EYEBROW_CONNECTIONS)
+
+                if mouth: 
+                    draw_landmarks(processed_frame, face_landmark, OUTER_LIPS_CONNECTIONS)
+                    draw_landmarks(processed_frame, face_landmark, INNER_LIPS_CONNECTIONS)
+
+                # Draw the direction of head pose
+                draw_head_pose_direction(processed_frame, face_landmark, x_angle, y_angle)
+                cv2.putText(processed_frame, direction_text, (x_max + 10, y_min + 20), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
+
+                face_result.face_id = face_id
+                face_result.ear = ear
+                face_result.mar = mar
+                results.faces.append(face_result)
+                face_id += 1
+        
+        results.processed_frame = processed_frame
+        return results
+

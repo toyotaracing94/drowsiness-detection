@@ -1,28 +1,11 @@
 import threading
 import time
 
-import cv2
 import numpy as np
 
 from src.hardware.buzzer.base_buzzer import BaseBuzzer
 from src.lib.drowsiness_detection import DrowsinessDetection
 from src.lib.socket_trigger import SocketTrigger
-from src.utils.drawing_utils import (
-    draw_head_pose_direction,
-    draw_landmarks,
-)
-from src.utils.landmark_constants import (
-    HEAD_POSE_POINTS,
-    INNER_LIPS_CONNECTIONS,
-    LEFT_EYE_CONNECTIONS,
-    LEFT_EYE_POINTS,
-    LEFT_EYEBROW_CONNECTIONS,
-    OUTER_LIPS_CONNECTIONS,
-    OUTER_LIPS_POINTS,
-    RIGHT_EYE_CONNECTIONS,
-    RIGHT_EYE_POINTS,
-    RIGHT_EYEBROW_CONNECTIONS,
-)
 from src.utils.logging import logging_default
 
 
@@ -126,87 +109,45 @@ class DrowsinessDetectionService:
             An Image that has been process by the model, with landmark's draw has been
             draw directly to the image
         """
-        # Get the landmarks for the face
-        face_landmarks = self.drowsiness_detector.detect_face_landmarks(frame)
+        detection_result = self.drowsiness_detector.process_and_draw(frame, processed_frame)
+        
+        if detection_result.faces:
+            # I'll just only buzzer the first face detected index for easier buzzer
+            face_state = detection_result.faces[0]
+        
+            # Handle drowsiness logic
+            if face_state.is_drowsy:
+                if self.drowsiness_start_time is None:
+                    self.drowsiness_start_time = time.time()
 
-        # Drowsiness and pose detection
-        if face_landmarks:
-            for face_landmark in face_landmarks:
-                x_angle, y_angle, _ = self.drowsiness_detector.estimate_head_pose(frame, face_landmark,HEAD_POSE_POINTS)
+                duration = time.time() - self.drowsiness_start_time
 
-                direction_text = "Looking Forward"
-                if y_angle < -10: direction_text = "Looking Left"
-                elif y_angle > 10: direction_text = "Looking Right"
-                elif x_angle < -10: direction_text = "Looking Down"
-                elif x_angle > 10: direction_text = "Looking Up"
+                if 2 <= duration < 5:
+                    self.start_buzzer(self.buzzer.beep_first_stage)
+                elif 5 <= duration < 10:
+                    self.start_buzzer(self.buzzer.beep_second_stage)
+                elif duration >= 10:
+                    self.start_buzzer(self.buzzer.beep_third_stage)
 
-                # Get the left-eye and right-eye landmark and mouth landmark
-                left_eye, right_eye = self.drowsiness_detector.extract_eye_landmark(face_landmark, LEFT_EYE_POINTS, RIGHT_EYE_POINTS, frame.shape[1], frame.shape[0])
-                mouth = self.drowsiness_detector.extract_mouth_landmark(face_landmark, OUTER_LIPS_POINTS, frame.shape[1], frame.shape[0])
-
-                # Calculate the EAR Ratio and MAR ratio to check drowsiness
-                ear = (self.drowsiness_detector.calculate_ear(left_eye) + self.drowsiness_detector.calculate_ear(right_eye)) / 2.0
-                mar = self.drowsiness_detector.calculate_mar(mouth)
-
-                # Check for drowsines
-                if self.drowsiness_detector.check_drowsiness(ear):
-                    cv2.putText(processed_frame, "Drowsy!", (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
-
-                    if self.drowsiness_start_time is None:
-                        self.drowsiness_start_time = time.time()
-
-                    # Calculate the time passes
+                if not self.drowsiness_notification_flag_sent:
+                    self.socket_trigger.save_image(frame, 'DROWSINESS', '', 'UPLOAD_IMAGE')
+                    self.drowsiness_notification_flag_sent = True
+            else:
+                if self.drowsiness_start_time is not None:
                     duration = time.time() - self.drowsiness_start_time
+                    logging_default.info(f"Driver regained alertness after {duration:.2f} seconds of drowsiness.")
 
-                    # Start  running the buzzer in the background
-                    if 2 <= duration < 5:
-                        self.start_buzzer(self.buzzer.beep_first_stage)
-                    elif 5 <= duration < 10:
-                        self.start_buzzer(self.buzzer.beep_second_stage)
-                    elif duration >= 10:
-                        self.start_buzzer(self.buzzer.beep_third_stage)
+                self.drowsiness_start_time = None
+                self.drowsiness_notification_flag_sent = False
+                self.stop_buzzer()
 
-                    # Send the notification
-                    if not self.drowsiness_notification_flag_sent:
-                        self.socket_trigger.save_image(frame, 'DROWSINESS', '', 'UPLOAD_IMAGE')
-                        self.drowsiness_notification_flag_sent = True
+            # Handle yawning logic
+            if face_state.is_yawning:
+                if not self.yawning_notification_flag_sent:
+                    logging_default.info("Driver appears to be yawning. Triggering notification.")
+                    self.socket_trigger.save_image(processed_frame, 'DROWSINESS', '', 'UPLOAD_IMAGE')
+                    self.yawning_notification_flag_sent = True
+            else:
+                self.yawning_notification_flag_sent = False
 
-                else:
-                    if self.drowsiness_start_time is not None:
-                        duration = time.time() - self.drowsiness_start_time
-                        logging_default.info(f"Driver regained alertness after {duration:.2f} seconds of drowsiness.")
-                    
-                    self.drowsiness_start_time = None
-                    self.drowsiness_notification_flag_sent = False
-                    self.stop_buzzer()
-
-                # Check for yawning
-                if self.drowsiness_detector.check_yawning(mar):
-                    cv2.putText(processed_frame, "Yawning!", (50, 80), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 255), 2)
-
-                    if not self.yawning_notification_flag_sent:
-                        logging_default.info("Driver appears to be yawning. Triggering notification.")
-                        self.socket_trigger.save_image(processed_frame, 'DROWSINESS', '', 'UPLOAD_IMAGE')
-                        self.yawning_notification_flag_sent = True
-                else:
-                    # Reset for the notification flag
-                    self.yawning_notification_flag_sent = False
-
-                # Draw the result of the eye drowsiness detection
-                if left_eye: 
-                    draw_landmarks(processed_frame, face_landmark, LEFT_EYE_CONNECTIONS)
-                    draw_landmarks(processed_frame, face_landmark, LEFT_EYEBROW_CONNECTIONS)
-
-                if right_eye:
-                    draw_landmarks(processed_frame, face_landmark, RIGHT_EYE_CONNECTIONS)
-                    draw_landmarks(processed_frame, face_landmark, RIGHT_EYEBROW_CONNECTIONS)
-
-                if mouth: 
-                    draw_landmarks(processed_frame, face_landmark, OUTER_LIPS_CONNECTIONS)
-                    draw_landmarks(processed_frame, face_landmark, INNER_LIPS_CONNECTIONS)
-
-                # Draw the direction of head pose
-                draw_head_pose_direction(processed_frame, face_landmark, x_angle, y_angle)
-                cv2.putText(processed_frame, direction_text, (50, 120), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
-
-        return processed_frame
+        return detection_result.processed_frame        
