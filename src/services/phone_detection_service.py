@@ -1,6 +1,7 @@
 
 import numpy as np
 
+from src.domain.dto.phone_detection_result import PhoneDetectionResult
 from src.lib.phone_detection import PhoneDetection
 from src.lib.socket_trigger import SocketTrigger
 from src.utils.logging import logging_default
@@ -13,7 +14,7 @@ class PhoneDetectionService:
         self.phone_detection = PhoneDetection("config/pose_detection_settings.json", inference_engine=inference_engine)
         self.socket_trigger = socket_trigger
     
-    def process_frame(self, frame : np.ndarray, processed_frame : np.ndarray) -> np.ndarray:
+    def process_frame(self, frame : np.ndarray, processed_frame : np.ndarray) -> PhoneDetectionResult:
         """
         This function is to process the frame and run models to achieve the
         phone detection. This class service will also hold the logic to count
@@ -40,5 +41,5 @@ class PhoneDetectionService:
             An Image that has been process by the model, with landmark's draw has been
             draw directly to the image
         """
-        detection_result = self.phone_detection.process_and_draw(frame, processed_frame)
-        return detection_result.processed_frame
+        detection_result = self.phone_detection.detect(frame, processed_frame)
+        return detection_result

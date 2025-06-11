@@ -1,14 +1,9 @@
 import math
 
-import cv2
 import numpy as np
 
 from src.domain.dto.phone_detection_result import PhoneDetectionResult, PhoneState
 from src.models.factory_model import get_body_pose_model
-from src.utils.drawing_utils import (
-    draw_landmarks,
-)
-from src.utils.landmark_constants import BODY_POSE_FACE_CONNECTIONS
 
 
 class PhoneDetection():
@@ -119,7 +114,7 @@ class PhoneDetection():
         return math.sqrt((point1[0] - point2[0]) ** 2 + (point1[1] - point2[1]) ** 2)
     
 
-    def process_and_draw(self, original_frame : np.ndarray, processed_frame : np.ndarray) -> PhoneDetectionResult:
+    def detect(self, original_frame : np.ndarray) -> PhoneDetectionResult:
         """
         Calculating the result of the detection and draw the results
         """
@@ -131,24 +126,20 @@ class PhoneDetection():
         # Phone usage detection feature get from pose information
         if body_landmark:
             phone_result = PhoneState()
+            phone_result.body_landmark = body_landmark
 
             is_calling, distance = self.detect_phone_usage(
                 body_landmark, original_frame.shape[1], original_frame.shape[0]
             )
 
             if is_calling:
-                cv2.putText(processed_frame, "Making a phone call", (50, 150), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
                 phone_result.is_calling = True
 
             if distance is not None:
-                cv2.putText(processed_frame, f"Distance: {distance:.2f}", (20, original_frame.shape[0] - 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 0), 2)
                 phone_result.distance = distance
 
             # Drawing the result
-            draw_landmarks(processed_frame, body_landmark, BODY_POSE_FACE_CONNECTIONS, color_lines=(255,0,0), color_points=(0,0,255))
-
             results.detection.append(phone_result)
-        results.processed_frame = processed_frame
         return results
 
 

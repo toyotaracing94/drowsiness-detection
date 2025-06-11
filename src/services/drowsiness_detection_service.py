@@ -3,6 +3,7 @@ import time
 
 import numpy as np
 
+from src.domain.dto.drowsiness_detection_result import DrowsinessDetectionResult
 from src.hardware.buzzer.base_buzzer import BaseBuzzer
 from src.lib.drowsiness_detection import DrowsinessDetection
 from src.lib.socket_trigger import SocketTrigger
@@ -82,7 +83,7 @@ class DrowsinessDetectionService:
         while self.keep_beeping and self.buzzer_function:
             self.buzzer_function()
 
-    def process_frame(self, frame : np.ndarray, processed_frame : np.ndarray) -> np.ndarray:
+    def process_frame(self, frame : np.ndarray) -> DrowsinessDetectionResult:
         """
         This function is to process the frame and run models to achieve the
         drowsiness detection. This class service will also hold the logic to count
@@ -109,7 +110,7 @@ class DrowsinessDetectionService:
             An Image that has been process by the model, with landmark's draw has been
             draw directly to the image
         """
-        detection_result = self.drowsiness_detector.process_and_draw(frame, processed_frame)
+        detection_result = self.drowsiness_detector.detects(frame)
         
         if detection_result.faces:
             # I'll just only buzzer the first face detected index for easier buzzer
@@ -145,9 +146,9 @@ class DrowsinessDetectionService:
             if face_state.is_yawning:
                 if not self.yawning_notification_flag_sent:
                     logging_default.info("Driver appears to be yawning. Triggering notification.")
-                    self.socket_trigger.save_image(processed_frame, 'DROWSINESS', '', 'UPLOAD_IMAGE')
+                    self.socket_trigger.save_image(frame, 'DROWSINESS', '', 'UPLOAD_IMAGE')
                     self.yawning_notification_flag_sent = True
             else:
                 self.yawning_notification_flag_sent = False
 
-        return detection_result.processed_frame        
+        return detection_result        

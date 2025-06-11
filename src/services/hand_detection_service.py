@@ -1,6 +1,7 @@
 
 import numpy as np
 
+from src.domain.dto.hands_detection_result import HandsDetectionResult
 from src.lib.hands_detection import HandsDetection
 from src.lib.socket_trigger import SocketTrigger
 from src.utils.logging import logging_default
@@ -13,7 +14,7 @@ class HandsDetectionService:
         self.hand_detector = HandsDetection("config/pose_detection_settings.json", inference_engine=inference_engine)
         self.socket_trigger = socket_trigger
     
-    def process_frame(self, frame : np.ndarray, processed_frame : np.ndarray) -> np.ndarray:
+    def process_frame(self, frame : np.ndarray) -> HandsDetectionResult:
         """
         This function is to process the frame and run models to achieve the
         hands detection. This class service will also hold the logic to count
@@ -40,5 +41,5 @@ class HandsDetectionService:
             An Image that has been process by the model, with landmark's draw has been
             draw directly to the image
         """
-        detection_result = self.hand_detector.process_and_draw(frame, processed_frame)
-        return detection_result.processed_frame
+        detection_result = self.hand_detector.detect(frame)
+        return detection_result
