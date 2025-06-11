@@ -70,7 +70,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 os.makedirs(settings.ApiSettings.static_dir, exist_ok=True)
-app.mount("/static", StaticFiles(directory="static"), name="static")
+app.mount(f"/{settings.ApiSettings.static_dir}", StaticFiles(directory=f"{settings.ApiSettings.static_dir}"), name="static")
 
 # Register router
 logging_default.info("Registering API routers")
