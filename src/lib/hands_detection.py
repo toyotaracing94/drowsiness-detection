@@ -1,6 +1,14 @@
 import numpy as np
 
+from src.domain.dto.hands_detection_result import HandsDetectionResult, HandState
 from src.models.factory_model import get_hands_pose_model
+from src.utils.drawing_utils import (
+    draw_landmarks,
+)
+from src.utils.landmark_constants import (
+    HAND_CONNECTIONS,
+    MIDDLE_POINTS,
+)
 
 
 class HandsDetection():
@@ -75,3 +83,30 @@ class HandsDetection():
             all_hands.append((x,y))
 
         return all_hands
+    
+    def process_and_draw(self, original_frame : np.ndarray, processed_frame : np.ndarray) -> HandsDetectionResult:
+        """
+        Calculating the result of the detection and draw the results
+        """
+        results = HandsDetectionResult()
+
+        # Get the landmarks for the hands
+        hand_landmarks = self.detect_hand_landmarks(original_frame)
+
+        if hand_landmarks:
+            for hand_landmark in hand_landmarks:
+                hand_result = HandState()
+
+                # No need for getting the each of the coordinates, 
+                # Because there is no purpose what's so ever right now
+                # so I'm just gonna draw the result
+
+                # Here some example how to get it, have no need for now
+                _ = self.extract_hand_landmark(hand_landmark, MIDDLE_POINTS, original_frame.shape[1], original_frame.shape[0])
+                
+                # Draw the landmarks of the hand
+                draw_landmarks(processed_frame, hand_landmark, HAND_CONNECTIONS, color_points=(0,0,0))
+                results.hands.append(hand_result)
+
+        results.processed_frame = processed_frame
+        return results
