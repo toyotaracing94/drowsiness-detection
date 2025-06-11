@@ -1,50 +1,38 @@
+import threading
 import time
 
 import cv2
 import numpy as np
-import threading
 
+from src.hardware.buzzer.base_buzzer import BaseBuzzer
 from src.lib.drowsiness_detection import DrowsinessDetection
-from src.lib.hands_detection import HandsDetection
-from src.lib.phone_detection import PhoneDetection
 from src.lib.socket_trigger import SocketTrigger
-from src.utils.logging import logging_default
 from src.utils.drawing_utils import (
-    draw_landmarks,
-    draw_fps,
     draw_head_pose_direction,
+    draw_landmarks,
 )
-from src.hardware.factory_hardware import (
-    get_camera,
-    get_buzzer
-)
-
 from src.utils.landmark_constants import (
-    LEFT_EYE_CONNECTIONS,
-    RIGHT_EYE_CONNECTIONS,
-    LEFT_EYEBROW_CONNECTIONS,
-    RIGHT_EYEBROW_CONNECTIONS,
-    OUTER_LIPS_CONNECTIONS,
-    INNER_LIPS_CONNECTIONS,
-    HAND_CONNECTIONS,
-    BODY_POSE_FACE_CONNECTIONS,
-
-    LEFT_EYE_POINTS,
-    RIGHT_EYE_POINTS,
-    OUTER_LIPS_POINTS,
     HEAD_POSE_POINTS,
-    MIDDLE_POINTS
+    INNER_LIPS_CONNECTIONS,
+    LEFT_EYE_CONNECTIONS,
+    LEFT_EYE_POINTS,
+    LEFT_EYEBROW_CONNECTIONS,
+    OUTER_LIPS_CONNECTIONS,
+    OUTER_LIPS_POINTS,
+    RIGHT_EYE_CONNECTIONS,
+    RIGHT_EYE_POINTS,
+    RIGHT_EYEBROW_CONNECTIONS,
 )
+from src.utils.logging import logging_default
+
 
 class DrowsinessDetectionService:
-    def __init__(self):
-        self.camera = get_camera()
-        self.buzzer = get_buzzer()
-        self.socket_trigger = SocketTrigger("config/api_settings.json")
-        self.drowsiness_detector = DrowsinessDetection("config/drowsiness_detection_settings.json")
-        self.phone_detection = PhoneDetection("config/pose_detection_settings.json")
-        self.hand_detector = HandsDetection("config/pose_detection_settings.json")
-        self.prev_time = time.time()
+    def __init__(self, buzzer : BaseBuzzer, socket_trigger : SocketTrigger, inference_engine : str = None):
+        logging_default.info("Initiated Drowsiness Services")
+
+        self.buzzer = buzzer
+        self.socket_trigger = socket_trigger
+        self.drowsiness_detector = DrowsinessDetection("config/drowsiness_detection_settings.json", inference_engine=inference_engine)
 
         self.drowsiness_start_time = None
         self.yawning_start_time = None
@@ -111,9 +99,9 @@ class DrowsinessDetectionService:
         while self.keep_beeping and self.buzzer_function:
             self.buzzer_function()
 
-    def process_frame(self, frame : np.ndarray):
+    def process_frame(self, frame : np.ndarray, processed_frame : np.ndarray) -> np.ndarray:
         """
-        This function is to process the frame and run multiple models to achieve the
+        This function is to process the frame and run models to achieve the
         drowsiness detection. This class service will also hold the logic to count
         how time passed for the result of the model based on the `intent-wrapper` of the model
 
@@ -129,34 +117,18 @@ class DrowsinessDetectionService:
         ----------
         frame : np.ndarray
             The image frame of which want to get drowsiness detection service result
+        processed_frame : np.ndarray
+            The image frame of which we want the draw happens
 
         Return
         ----------
-        image
+        processed_frame
             An Image that has been process by the model, with landmark's draw has been
             draw directly to the image
         """
-        image = frame.copy()
-
-        # Get the landmarks for the face, body and hands
+        # Get the landmarks for the face
         face_landmarks = self.drowsiness_detector.detect_face_landmarks(frame)
-        hand_landmarks = self.hand_detector.detect_hand_landmarks(frame)
-        body_landmark = self.phone_detection.detect_body_pose(frame)
 
-        # Phone usage detection feature get from pose information
-        if body_landmark:      
-            is_calling, distance = self.phone_detection.detect_phone_usage(
-                body_landmark, frame.shape[1], frame.shape[0]
-            )
-
-            if is_calling:
-                cv2.putText(image, "Making a phone call", (50, 150), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
-            if distance is not None:
-                cv2.putText(image, f"Distance: {distance:.2f}", (20, frame.shape[0] - 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 0), 2)
-
-            # Drawing the result
-            draw_landmarks(image, body_landmark, BODY_POSE_FACE_CONNECTIONS, color_lines=(255,0,0), color_points=(0,0,255))
-            
         # Drowsiness and pose detection
         if face_landmarks:
             for face_landmark in face_landmarks:
@@ -178,7 +150,7 @@ class DrowsinessDetectionService:
 
                 # Check for drowsines
                 if self.drowsiness_detector.check_drowsiness(ear):
-                    cv2.putText(image, "Drowsy!", (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
+                    cv2.putText(processed_frame, "Drowsy!", (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
 
                     if self.drowsiness_start_time is None:
                         self.drowsiness_start_time = time.time()
@@ -196,7 +168,7 @@ class DrowsinessDetectionService:
 
                     # Send the notification
                     if not self.drowsiness_notification_flag_sent:
-                        self.socket_trigger.save_image(image, 'DROWSINESS', '', 'UPLOAD_IMAGE')
+                        self.socket_trigger.save_image(frame, 'DROWSINESS', '', 'UPLOAD_IMAGE')
                         self.drowsiness_notification_flag_sent = True
 
                 else:
@@ -210,11 +182,11 @@ class DrowsinessDetectionService:
 
                 # Check for yawning
                 if self.drowsiness_detector.check_yawning(mar):
-                    cv2.putText(image, "Yawning!", (50, 80), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 255), 2)
+                    cv2.putText(processed_frame, "Yawning!", (50, 80), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 255), 2)
 
-                    if not self.drowsiness_notification_flag_sent:
+                    if not self.yawning_notification_flag_sent:
                         logging_default.info("Driver appears to be yawning. Triggering notification.")
-                        self.socket_trigger.save_image(image, 'DROWSINESS', '', 'UPLOAD_IMAGE')
+                        self.socket_trigger.save_image(processed_frame, 'DROWSINESS', '', 'UPLOAD_IMAGE')
                         self.yawning_notification_flag_sent = True
                 else:
                     # Reset for the notification flag
@@ -222,37 +194,19 @@ class DrowsinessDetectionService:
 
                 # Draw the result of the eye drowsiness detection
                 if left_eye: 
-                    draw_landmarks(image, face_landmark, LEFT_EYE_CONNECTIONS)
-                    draw_landmarks(image, face_landmark, LEFT_EYEBROW_CONNECTIONS)
+                    draw_landmarks(processed_frame, face_landmark, LEFT_EYE_CONNECTIONS)
+                    draw_landmarks(processed_frame, face_landmark, LEFT_EYEBROW_CONNECTIONS)
 
                 if right_eye:
-                    draw_landmarks(image, face_landmark, RIGHT_EYE_CONNECTIONS)
-                    draw_landmarks(image, face_landmark, RIGHT_EYEBROW_CONNECTIONS)
+                    draw_landmarks(processed_frame, face_landmark, RIGHT_EYE_CONNECTIONS)
+                    draw_landmarks(processed_frame, face_landmark, RIGHT_EYEBROW_CONNECTIONS)
 
                 if mouth: 
-                    draw_landmarks(image, face_landmark, OUTER_LIPS_CONNECTIONS)
-                    draw_landmarks(image, face_landmark, INNER_LIPS_CONNECTIONS)
+                    draw_landmarks(processed_frame, face_landmark, OUTER_LIPS_CONNECTIONS)
+                    draw_landmarks(processed_frame, face_landmark, INNER_LIPS_CONNECTIONS)
 
                 # Draw the direction of head pose
-                draw_head_pose_direction(image, face_landmark, x_angle, y_angle)
-                cv2.putText(image, direction_text, (50, 120), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
+                draw_head_pose_direction(processed_frame, face_landmark, x_angle, y_angle)
+                cv2.putText(processed_frame, direction_text, (50, 120), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
 
-        if hand_landmarks:
-            for hand_landmark in hand_landmarks:
-                # No need for getting the each of the coordinates, 
-                # Because there is no purpose what's so ever right now
-                # so I'm just gonna draw the result
-
-                # Here some example how to get it
-                hand = self.hand_detector.extract_hand_landmark(hand_landmark, MIDDLE_POINTS, image.shape[1], image.shape[0])
-                
-                # Draw the landmarks of the hand
-                draw_landmarks(image, hand_landmark, HAND_CONNECTIONS, color_points=(0,0,0))
-
-        # FPS calculation
-        current_time = time.time()
-        fps = 1 / (current_time - self.prev_time)
-        self.prev_time = current_time
-        draw_fps(image, f"FPS : {fps:.2f}")
-
-        return image
+        return processed_frame

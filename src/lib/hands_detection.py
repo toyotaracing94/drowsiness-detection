@@ -4,10 +4,10 @@ from src.models.factory_model import get_hands_pose_model
 
 
 class HandsDetection():
-    def __init__(self, model_settings_path : str, model_path: str = None):
+    def __init__(self, model_settings_path : str, model_path: str = None, inference_engine : str = None):
 
         # Get the model
-        self.model = get_hands_pose_model(model_settings_path, model_path)
+        self.model = get_hands_pose_model(model_settings_path, model_path, inference_engine)
 
     def detect_hand_landmarks(self, image : np.ndarray) -> list:
         """

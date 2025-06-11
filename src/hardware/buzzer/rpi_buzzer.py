@@ -1,12 +1,15 @@
+from time import sleep
+
 from gpiozero import Buzzer, Device
 from gpiozero.pins.lgpio import LGPIOFactory
-from time import sleep
+
+from src.hardware.buzzer.base_buzzer import BaseBuzzer
 from src.utils.logging import logging_default
 
 # Set the pin factory for Raspberry Pi 5 compatibility
 Device.pin_factory = LGPIOFactory()
 
-class RaspberryBuzzer:
+class RaspberryBuzzer(BaseBuzzer):
     def __init__(self, pin: int = 23):
         self.pin = pin
         self.buzzer = Buzzer(self.pin)
