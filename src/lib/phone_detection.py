@@ -44,7 +44,6 @@ class PhoneDetection():
         pose_landmark = self.model.inference(preprocess_image)
         return pose_landmark
     
-    
     def detect_phone_usage(self, pose_landmark, frame_width : int = 640, frame_height : int = 480, threshold : int = 150):
         """
         Detect if a hand is near the ear based on pose landmarks only. This was achieved by calculating
@@ -113,7 +112,6 @@ class PhoneDetection():
         """
         return math.sqrt((point1[0] - point2[0]) ** 2 + (point1[1] - point2[1]) ** 2)
     
-
     def detect(self, original_frame : np.ndarray) -> PhoneDetectionResult:
         """
         Calculating the result of the detection and draw the results

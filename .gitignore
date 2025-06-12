@@ -14,3 +14,6 @@ image_event
 
 # Tests
 .coverage
+
+# Database
+*.db

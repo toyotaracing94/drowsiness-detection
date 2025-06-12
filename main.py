@@ -4,10 +4,14 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from sqlmodel import Session
+from src.infrastructure.migrate import run_migrations
+from src.services.drowsiness_event_service import DrowsinessEventService
 from src.settings.app_config import settings
+from src.infrastructure.session import init_db, engine
 
 from src.lib.socket_trigger import SocketTrigger
-from src.routers import drowsiness_router, app_version, buzzer_router
+from src.routers import drowsiness_router, app_version, buzzer_router, drowsiness_event_router
 from src.services.drowsiness_detection_service import DrowsinessDetectionService
 from src.services.phone_detection_service import PhoneDetectionService
 from src.services.hand_detection_service import HandsDetectionService
@@ -27,7 +31,14 @@ socket_trigger = SocketTrigger(settings.ApiSettings)
 camera = get_camera()
 buzzer = get_buzzer()
 
-drowsiness_service = DrowsinessDetectionService(buzzer, socket_trigger, settings.PipelineSettings.inference_engine)
+# Apply Alembic migrations
+run_migrations()
+
+# Create a manual DB session and inject service
+db_session = Session(engine)
+drowsiness_event_service = DrowsinessEventService(db_session)
+
+drowsiness_service = DrowsinessDetectionService(buzzer, socket_trigger, drowsiness_event_service, settings.PipelineSettings.inference_engine)
 phone_detection_service = PhoneDetectionService(socket_trigger, settings.PipelineSettings.inference_engine)
 hand_service = HandsDetectionService(socket_trigger, settings.PipelineSettings.inference_engine)
 
@@ -51,6 +62,7 @@ async def lifespan(app: FastAPI):
     # Event when shutdown the FastAPI
     camera.release()
     buzzer.cleanup()
+    db_session.close()
 
 # Define Fast API App
 logging_default.info("Run webApp")
@@ -77,3 +89,4 @@ logging_default.info("Registering API routers")
 app.include_router(app_version.router, prefix="/version", tags=["Version"])
 app.include_router(buzzer_router.buzzer_router(buzzer), prefix="/buzzer", tags=["Buzzer"])
 app.include_router(drowsiness_router.drowsiness_router(frame_buffer), prefix="/drowsiness", tags=["Video"])
+app.include_router(drowsiness_event_router.router, prefix="/drowsinessevent", tags=["DrowsinessEvent"])

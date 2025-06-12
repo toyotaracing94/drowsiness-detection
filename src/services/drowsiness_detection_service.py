@@ -4,19 +4,22 @@ import time
 import numpy as np
 
 from src.domain.dto.drowsiness_detection_result import DrowsinessDetectionResult
+from src.domain.entity.drowsiness_event import DrowsinessEvent
 from src.hardware.buzzer.base_buzzer import BaseBuzzer
 from src.lib.drowsiness_detection import DrowsinessDetection
 from src.lib.socket_trigger import SocketTrigger
+from src.services.drowsiness_event_service import DrowsinessEventService
 from src.utils.logging import logging_default
 
 
 class DrowsinessDetectionService:
-    def __init__(self, buzzer : BaseBuzzer, socket_trigger : SocketTrigger, inference_engine : str = None):
+    def __init__(self, buzzer : BaseBuzzer, socket_trigger : SocketTrigger, drowsiness_event_service: DrowsinessEventService, inference_engine : str = None):
         logging_default.info("Initiated Drowsiness Services")
 
         self.buzzer = buzzer
         self.socket_trigger = socket_trigger
         self.drowsiness_detector = DrowsinessDetection("config/drowsiness_detection_settings.json", inference_engine=inference_engine)
+        self.drowsiness_event_service = drowsiness_event_service
 
         self.drowsiness_start_time = None
         self.yawning_start_time = None
@@ -132,6 +135,14 @@ class DrowsinessDetectionService:
 
                 if not self.drowsiness_notification_flag_sent:
                     self.socket_trigger.save_image(frame, 'DROWSINESS', '', 'UPLOAD_IMAGE')
+                    event = DrowsinessEvent(
+                        vehicle_identification="ABC123",
+                        image="yes",
+                        ear=face_state.ear,
+                        mar=face_state.mar,
+                        event_type="DROWSINESS"
+                    )
+                    self.drowsiness_event_service.create_event(event)
                     self.drowsiness_notification_flag_sent = True
             else:
                 if self.drowsiness_start_time is not None:
