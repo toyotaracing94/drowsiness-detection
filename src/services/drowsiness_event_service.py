@@ -1,4 +1,5 @@
 from typing import List
+from uuid import UUID
 
 from sqlmodel import Session, select
 
@@ -34,7 +35,7 @@ class DrowsinessEventService:
         self.session.refresh(event)
         return event
 
-    def get_event_by_id(self, event_id) -> DrowsinessEvent | None:
+    def get_event_by_id(self, event_id : str) -> DrowsinessEvent | None:
         """
         Retrieves a DrowsinessEvent by its ID.
 
@@ -44,7 +45,7 @@ class DrowsinessEventService:
         Returns:
             DrowsinessEvent | None: The event if found, otherwise None.
         """
-        return self.session.get(DrowsinessEvent, event_id)
+        return self.session.get(DrowsinessEvent, UUID(event_id))
 
     def get_all_events(self) -> List[DrowsinessEvent]:
         """
@@ -56,7 +57,7 @@ class DrowsinessEventService:
         statement = select(DrowsinessEvent).order_by(DrowsinessEvent.timestamp.desc())
         return self.session.exec(statement).all()
 
-    def delete_event(self, event_id) -> bool:
+    def delete_event(self, event_id : str) -> bool:
         """
         Deletes a DrowsinessEvent by its ID.
 
@@ -66,7 +67,7 @@ class DrowsinessEventService:
         Returns:
             bool: True if the event was deleted, otherwise False.
         """
-        event = self.session.get(DrowsinessEvent, event_id)
+        event = self.session.get(DrowsinessEvent, UUID(event_id))
         if event:
             self.session.delete(event)
             self.session.commit()
