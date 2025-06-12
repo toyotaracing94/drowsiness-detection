@@ -153,6 +153,25 @@ chmod +x scripts/setup_env_raspberry.sh
 ./scripts/setup_env_raspberry.sh
 ```
 
+## How to Migrate Database
+For building the database, this project is using SQlite, where to build the entity and schemas, we are using [SQLModel](https://sqlmodel.tiangolo.com/) for interacting to the database where it was based on the [SQLAlchemy](https://www.sqlalchemy.org/). I choose this because it was perfect combination that combine with SQLAchemy and also the pydantic model of FastAPI was using. The entity can be seen on the `src/domain/entity`. For migrations, we are using [Alembic](https://alembic.sqlalchemy.org/en/latest/). This two is the tools that we are going to use for connecting to the database we building.
+
+First, we already build the configuration, but if not yet being done or don't see `alembic.ini`, please init them by simply type this
+```bash
+alembic init alembic
+```
+
+To generate the migrations, we can simply on the terminal
+```bash
+alembic revision --autogenerate -m "migrations"
+```
+
+And to apply the migrations, we can type this on terminal
+```bash
+alembic upgrade head
+```
+
+in the code of `main.py`, I already add function to dynamically at the runtime on the startyp to apply migrations to the database if there's any changes. So what you can do is, if you want to add something to the databse, just make sure to do the migrations, then commit that, and then run them for your convinience. 
 
 ## How to Run The App
 The app is using FastAPI to control the data of the stream. And to run this, it's quite simple if you follow the setup up environment correctly. We will use uvicorn, An ASGI web server for Python. First, make sure you are in the virtual environment first, and after that simply type this on terminal on the root directory
@@ -202,8 +221,8 @@ All of this can be found [here](https://docs.astral.sh/ruff/tutorial/), so feel 
 
 
 ## Authors
-1. Batch 1 Members of CC Department
-2. Muhammad Juniarto 
+1. Muhammad Juniarto 
+2. Batch 1 Members of CC Department
 
 
 ## Project Reference
