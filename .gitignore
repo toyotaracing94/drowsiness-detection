@@ -2,3 +2,18 @@
 __pycache__/
 *.py[cod]
 *$py.class
+
+# Virtual Environment
+venv
+
+# Logs
+log
+
+# Image events
+image_event
+
+# Tests
+.coverage
+
+# Database
+*.db
