@@ -1,7 +1,9 @@
+import datetime
 import threading
 import time
 
 import numpy as np
+from uuid6 import uuid7
 
 from src.domain.dto.drowsiness_detection_result import DrowsinessDetectionResult
 from src.domain.entity.drowsiness_event import DrowsinessEvent
@@ -10,6 +12,7 @@ from src.lib.drowsiness_detection import DrowsinessDetection
 from src.lib.socket_trigger import SocketTrigger
 from src.services.drowsiness_event_service import DrowsinessEventService
 from src.utils.logging import logging_default
+
 
 
 class DrowsinessDetectionService:
@@ -140,7 +143,8 @@ class DrowsinessDetectionService:
                         image="yes",
                         ear=face_state.ear,
                         mar=face_state.mar,
-                        event_type="DROWSINESS"
+                        event_type="DROWSINESS",
+                        timestamp=datetime.datetime.now()
                     )
                     self.drowsiness_event_service.create_event(event)
                     self.drowsiness_notification_flag_sent = True

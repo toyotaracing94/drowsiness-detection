@@ -42,3 +42,40 @@ def get_event(event_id: str, service: DrowsinessEventService = Depends(get_drows
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"An error occurred while fetching the event: {str(e)}"
         )
+    
+
+@router.post(
+    "/",
+    description="Create a new drowsiness event.",
+    response_model=DrowsinessEvent
+)
+def create_event(event: DrowsinessEvent, service: DrowsinessEventService = Depends(get_drowsiness_event_service)):
+    try:
+        # Creating the event via the service
+        created_event = service.create_event(event)
+        return created_event
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"An error occurred while creating the event: {str(e)}"
+        )
+
+@router.delete(
+    "/{event_id}",
+    description="Delete a drowsiness event by ID.",
+    response_model=dict
+)
+def delete_event(event_id: str, service: DrowsinessEventService = Depends(get_drowsiness_event_service)):
+    try:
+        success = service.delete_event(event_id)
+        if not success:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Drowsiness event not found"
+            )
+        return {"message": "Drowsiness event deleted successfully"}
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"An error occurred while deleting the event: {str(e)}"
+        )

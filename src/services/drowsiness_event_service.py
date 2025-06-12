@@ -1,7 +1,9 @@
+import datetime
 from typing import List
 from uuid import UUID
 
 from sqlmodel import Session, select
+from src.utils.logging import logging_default
 
 from src.domain.entity.drowsiness_event import DrowsinessEvent
 
@@ -30,10 +32,23 @@ class DrowsinessEventService:
         Returns:
             DrowsinessEvent: The created event with its generated ID.
         """
-        self.session.add(event)
-        self.session.commit()
-        self.session.refresh(event)
-        return event
+        try:
+            logging_default.info(f"Creating new DrowsinessEvent: "
+                        f"ID: {event.id}, Vehicle: {event.vehicle_identification}, "
+                        f"Timestamp: {event.timestamp}, Event Type: {event.event_type}")
+            
+            if isinstance(event.id, str):
+                event.id = UUID(event.id)
+            if isinstance(event.timestamp, str):
+                event.timestamp = datetime.datetime.fromisoformat(event.timestamp)
+
+            self.session.add(event)
+            self.session.commit()
+            self.session.refresh(event)
+            return event
+        except Exception as e:
+            logging_default.error(f"Error while creating DrowsinessEvent: {str(e)}")
+            raise
 
     def get_event_by_id(self, event_id : str) -> DrowsinessEvent | None:
         """
@@ -45,7 +60,19 @@ class DrowsinessEventService:
         Returns:
             DrowsinessEvent | None: The event if found, otherwise None.
         """
-        return self.session.get(DrowsinessEvent, UUID(event_id))
+        try:
+            logging_default.info(f"Getting DrowsinessEvent ID: {event_id}")
+            event = self.session.get(DrowsinessEvent, UUID(event_id))
+            if event:
+                logging_default.info(f"Fetched DrowsinessEvent: "
+                            f"ID: {event.id}, Vehicle: {event.vehicle_identification}, "
+                            f"Timestamp: {event.timestamp}, Event Type: {event.event_type}")
+            else:
+                logging_default.warning(f"DrowsinessEvent with ID {event_id} not found.")
+            return event
+        except Exception as e:
+            logging_default.error(f"Error while fetching DrowsinessEvent with ID {event_id}: {str(e)}")
+            raise
 
     def get_all_events(self) -> List[DrowsinessEvent]:
         """
@@ -54,8 +81,14 @@ class DrowsinessEventService:
         Returns:
             List[DrowsinessEvent]: A list of all events.
         """
-        statement = select(DrowsinessEvent).order_by(DrowsinessEvent.timestamp.desc())
-        return self.session.exec(statement).all()
+        try:
+            logging_default.info(f"Getting DrowsinessEvent")
+            statement = select(DrowsinessEvent).order_by(DrowsinessEvent.timestamp.desc())
+            events = self.session.exec(statement).all()
+            return events
+        except Exception as e:
+            logging_default.error(f"Error while fetching all DrowsinessEvent records: {str(e)}")
+            raise
 
     def delete_event(self, event_id : str) -> bool:
         """
@@ -67,9 +100,18 @@ class DrowsinessEventService:
         Returns:
             bool: True if the event was deleted, otherwise False.
         """
-        event = self.session.get(DrowsinessEvent, UUID(event_id))
-        if event:
-            self.session.delete(event)
-            self.session.commit()
-            return True
-        return False
+        try:
+            logging_default.info(f"Received delete_event request with event_id: {event_id}")
+
+            event = self.session.get(DrowsinessEvent, UUID(event_id))
+            if event:
+                self.session.delete(event)
+                self.session.commit()
+                logging_default.info(f"DrowsinessEvent deleted successfully: ID: {event.id}")
+                return True
+            else:
+                logging_default.warning(f"DrowsinessEvent with ID {event_id} not found for deletion.")
+                return False
+        except Exception as e:
+            logging_default.error(f"Error while deleting DrowsinessEvent with ID {event_id}: {str(e)}")
+            raise
