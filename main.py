@@ -11,7 +11,7 @@ from src.settings.app_config import settings
 from src.infrastructure.session import init_db, engine
 
 from src.lib.socket_trigger import SocketTrigger
-from src.routers import drowsiness_router, app_version, buzzer_router, drowsiness_event_router
+from src.routers import drowsiness_realtime_router, app_version, buzzer_router, drowsiness_event_router
 from src.services.drowsiness_detection_service import DrowsinessDetectionService
 from src.services.phone_detection_service import PhoneDetectionService
 from src.services.hand_detection_service import HandsDetectionService
@@ -88,5 +88,5 @@ app.mount(f"/{settings.ApiSettings.static_dir}", StaticFiles(directory=f"{settin
 logging_default.info("Registering API routers")
 app.include_router(app_version.router, prefix="/version", tags=["Version"])
 app.include_router(buzzer_router.buzzer_router(buzzer), prefix="/buzzer", tags=["Buzzer"])
-app.include_router(drowsiness_router.drowsiness_router(frame_buffer), prefix="/drowsiness", tags=["Video"])
-app.include_router(drowsiness_event_router.router, prefix="/drowsinessevent", tags=["DrowsinessEvent"])
+app.include_router(drowsiness_realtime_router.drowsiness_realtime_router(frame_buffer), prefix="/realtime", tags=["Realtime Drowsiness"])
+app.include_router(drowsiness_event_router.router, prefix="/drowsinessevent", tags=["Drowsiness Event"])
