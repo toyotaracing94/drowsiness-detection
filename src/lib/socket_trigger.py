@@ -71,11 +71,11 @@ class SocketTrigger:
             logging_default.info(f"Saving image for event: {event}, target: {target}, websocket event: {ws_event}")
             os.makedirs(self.image_event_path, exist_ok=True)
 
+            # Save the file in the local system
+            cv2.imwrite(f"{self.image_event_path}/{image_uuid}.jpg", image)
+
             if self.send_to_server:
                 with connect(self.ws_url) as websocket: 
-                    # Save the file in the local system
-                    cv2.imwrite(f"{self.image_event_path}/{image_uuid}.jpg", image)
-
                     with open(f"{self.image_event_path}/{image_uuid}.jpg", "rb") as image_file:
                         encoded_string = base64.b64encode(image_file.read())
                         json_data = {
