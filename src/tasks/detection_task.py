@@ -40,8 +40,10 @@ class DetectionTask:
         self.hands_detection_model_run = config.hands_detection_model_run
 
         logging_default.info(
-            "Loaded config - drowsiness_model_run: %s, phone_detection_model_run: %s, hands_detection_model_run: %s",
-            self.drowsiness_model_run, self.phone_detection_model_run, self.hands_detection_model_run
+            "Loaded config - drowsiness_model_run: {drowsiness_model_run}, phone_detection_model_run: {phone_detection_model_run}, hands_detection_model_run: {hands_detection_model_run}",
+            drowsiness_model_run=self.drowsiness_model_run,
+            phone_detection_model_run=self.phone_detection_model_run,
+            hands_detection_model_run=self.hands_detection_model_run
         )
 
     def detection_loop(self, drowsiness_service : DrowsinessDetectionService, 

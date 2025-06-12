@@ -39,8 +39,9 @@ class MediapipeHandsModel(BaseModelInference):
         # Log the configurations loaded
         logging_default.info(
             "Loaded configuration - "
-            "Min Tracking Confidence: %.2f, Min Detection Confidence: %.2f",
-            self.min_tracking_confidence, self.min_detection_confidence
+            "Min Tracking Confidence: {min_tracking_confidence:.2f}, Min Detection Confidence: {min_detection_confidence:.2f}",
+            min_tracking_confidence=self.min_tracking_confidence,
+            min_detection_confidence=self.min_detection_confidence
         )
         return
 

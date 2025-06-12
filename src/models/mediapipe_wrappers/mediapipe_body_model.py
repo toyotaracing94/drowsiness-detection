@@ -43,10 +43,15 @@ class MediapipeBodyPoseModel(BaseModelInference):
         # Log the configurations loaded
         logging_default.info(
             "Loaded configuration - "
-            "Static Image Mode: %s, Smooth Segmentation: %s, Enable Segmentation: %s, "
-            "Smooth Landmarks: %s, Min Tracking Confidence: %.2f, Min Detection Confidence: %.2f",
-            self.static_image_mode, self.smooth_segmentation, self.enable_segmentation, 
-            self.smooth_landmarks, self.min_tracking_confidence, self.min_detection_confidence
+            "Static Image Mode: {static_image_mode}, Smooth Segmentation: {smooth_segmentation}, "
+            "Enable Segmentation: {enable_segmentation}, Smooth Landmarks: {smooth_landmarks}, "
+            "Min Tracking Confidence: {min_tracking_confidence:.2f}, Min Detection Confidence: {min_detection_confidence:.2f}",
+            static_image_mode=self.static_image_mode,
+            smooth_segmentation=self.smooth_segmentation,
+            enable_segmentation=self.enable_segmentation,
+            smooth_landmarks=self.smooth_landmarks,
+            min_tracking_confidence=self.min_tracking_confidence,
+            min_detection_confidence=self.min_detection_confidence
         )
 
         return

@@ -52,8 +52,8 @@ class DrowsinessDetection():
         self.mouth_aspect_ratio_consec_frames = config["mouth_aspect_ration_consec_frames"]
 
         logging_default.info(
-            "Loaded config - EAR: %.2f, EAR Frames: %d, MAR: %.2f, MAR Frames: %d",
-            self.ear_ratio, self.ear_consec_frames, self.mouth_aspect_ratio_threshold, self.mouth_aspect_ratio_consec_frames
+            f"Loaded config - EAR: {self.ear_ratio}, EAR Frames: {self.ear_consec_frames}, " \
+            f"MAR: {self.mouth_aspect_ratio_threshold}, MAR Frames: {self.mouth_aspect_ratio_consec_frames}"
         )
         return
 
@@ -256,7 +256,7 @@ class DrowsinessDetection():
         d3 = self.euclidean_distance(eye[0], eye[3])      # Horizontal distance
 
         ear = (d1 + d2) / (2.0 * d3)
-        logging_default.debug("Ear Calculation: ", ear)
+        logging_default.debug("Ear Calculation: {ear}")
 
         return ear
     

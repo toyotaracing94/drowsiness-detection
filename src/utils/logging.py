@@ -1,33 +1,68 @@
 import logging
 import os
+import sys
 from datetime import datetime
 
+from loguru import logger
 
-def create_logger(log_filepath:str, formatter, logger_name:str=None):
-    if not os.path.exists(os.path.dirname(log_filepath)):
-        os.makedirs(os.path.dirname(log_filepath))
+# Ensure logs directory exists
+log_dir = "log"
+os.makedirs(log_dir, exist_ok=True)
 
-    file_handler = logging.FileHandler(log_filepath)
-    file_handler.setFormatter(formatter)
-    file_handler.setLevel(logging.INFO)
-
-    logger = logging.getLogger(logger_name)
-    
-    # Avoid adding duplicate handlers
-    if not logger.hasHandlers():
-        logger.addHandler(file_handler)
-
-    logger.setLevel(logging.INFO)
-
-    return logger
-
-# Get the current timestamp for log file naming
+# Generate timestamp for filename, matching your original style
 t = datetime.now()
 current_time = t.strftime("%Y_%m_%d_%H_%M_%S.%f")
-log_filepath = f"log/{current_time}.log"
+log_filepath = os.path.join(log_dir, f"{current_time}.log")
 
-# Define formatters
-default_logging_formatter = logging.Formatter("%(asctime)-15s [%(levelname)s] %(module)s.%(funcName)s: %(message)s")
+log_format = (
+    "<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> "
+    "[<level>{level: <8}</level>] "
+    "<cyan>{module}</cyan>.<cyan>{function}</cyan>: {message}"
+)
 
-# Create specific logger for default logging
-logging_default = create_logger(log_filepath, default_logging_formatter, 'default')
+# Remove any default Loguru handlers
+logger.remove()
+
+# Console handler with color
+logger.add(
+    sys.stdout,
+    format=log_format,
+    level="INFO",
+    colorize=True,
+    enqueue=True,
+)
+
+# File handler with exact timestamp filename, no colors
+file_log_format = (
+    "{time:YYYY-MM-DD HH:mm:ss.SSS} "
+    "[{level: <8}] "
+    "{module}.{function}: {message}"
+)
+
+logger.add(
+    log_filepath,
+    format=file_log_format,
+    level="INFO",
+    enqueue=True,
+    backtrace=True,
+    diagnose=True,
+)
+
+# Intercept stdlib logging and forward to Loguru
+class InterceptHandler(logging.Handler):
+    def emit(self, record):
+        try:
+            level = logger.level(record.levelname).name
+        except ValueError:
+            level = record.levelno
+
+        frame, depth = logging.currentframe(), 2
+        while frame and frame.f_code.co_filename == logging.__file__:
+            frame = frame.f_back
+            depth += 1
+
+        logger.opt(depth=depth, exception=record.exc_info).log(level, record.getMessage())
+
+logging.basicConfig(handlers=[InterceptHandler()], level=0, force=True)
+
+logging_default = logger.bind(name="default")

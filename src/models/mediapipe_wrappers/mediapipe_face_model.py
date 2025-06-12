@@ -40,13 +40,17 @@ class MediapipeFaceMeshModel(BaseModelInference):
         self.min_tracking_confidence = config["min_tracking_confidence"]
         self.min_detection_confidence = config["min_detection_confidence"]
 
-         # Log the configurations loaded
+        # Log the configurations loaded
         logging_default.info(
             "Loaded configuration - "
-            "Static Image Mode: %s, Refine Landmarks: %s, Max Number Face Detection: %d, "
-            "Min Tracking Confidence: %.2f, Min Detection Confidence: %.2f",
-            self.static_image_mode, self.refine_landmarks, self.max_number_face_detection,
-            self.min_tracking_confidence, self.min_detection_confidence
+            "Static Image Mode: {static_image_mode}, Refine Landmarks: {refine_landmarks}, "
+            "Max Number Face Detection: {max_number_face_detection}, "
+            "Min Tracking Confidence: {min_tracking_confidence:.2f}, Min Detection Confidence: {min_detection_confidence:.2f}",
+            static_image_mode=self.static_image_mode,
+            refine_landmarks=self.refine_landmarks,
+            max_number_face_detection=self.max_number_face_detection,
+            min_tracking_confidence=self.min_tracking_confidence,
+            min_detection_confidence=self.min_detection_confidence
         )
 
         return
