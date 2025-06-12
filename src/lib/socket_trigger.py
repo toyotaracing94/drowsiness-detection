@@ -1,6 +1,5 @@
 
 import base64
-import datetime
 import json
 import os
 
@@ -44,7 +43,7 @@ class SocketTrigger:
             f"Device: {self.device_name}, Send to Server: {self.send_to_server}, WS URL: {self.ws_url}"
         )
 
-    def save_image(self, image : np.ndarray, event, target : str = '', ws_event : str = '') -> None:
+    def save_image(self, image : np.ndarray, image_uuid : str, event, target : str = '', ws_event : str = '') -> None:
         """
         Save the image locally, encode it in base64, and send it to the WebSocket server.
 
@@ -75,10 +74,9 @@ class SocketTrigger:
             if self.send_to_server:
                 with connect(self.ws_url) as websocket: 
                     # Save the file in the local system
-                    timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-                    cv2.imwrite(f"{self.image_event_path}/frame{timestamp}.jpg", image)
+                    cv2.imwrite(f"{self.image_event_path}/{image_uuid}.jpg", image)
 
-                    with open(f"{self.image_event_path}/frame{timestamp}.jpg", "rb") as image_file:
+                    with open(f"{self.image_event_path}/{image_uuid}.jpg", "rb") as image_file:
                         encoded_string = base64.b64encode(image_file.read())
                         json_data = {
                             "event" : ws_event,

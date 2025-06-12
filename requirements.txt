@@ -8,3 +8,4 @@ loguru==0.7.3
 sqlmodel==0.0.24
 pytest
 ruff==0.11.13
+uuid6==2024.7.10

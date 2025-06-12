@@ -11,8 +11,8 @@ from src.hardware.buzzer.base_buzzer import BaseBuzzer
 from src.lib.drowsiness_detection import DrowsinessDetection
 from src.lib.socket_trigger import SocketTrigger
 from src.services.drowsiness_event_service import DrowsinessEventService
+from src.settings.app_config import settings
 from src.utils.logging import logging_default
-
 
 
 class DrowsinessDetectionService:
@@ -137,10 +137,12 @@ class DrowsinessDetectionService:
                     self.start_buzzer(self.buzzer.beep_third_stage)
 
                 if not self.drowsiness_notification_flag_sent:
-                    self.socket_trigger.save_image(frame, 'DROWSINESS', '', 'UPLOAD_IMAGE')
+                    image_uuid = uuid7()
+                    self.socket_trigger.save_image(frame, image_uuid, 'DROWSINESS', '', 'UPLOAD_IMAGE')
                     event = DrowsinessEvent(
-                        vehicle_identification="ABC123",
-                        image="yes",
+                        id=image_uuid,
+                        vehicle_identification=settings.ApiSettings.vehicle_id,
+                        image=f"{settings.ApiSettings.static_dir}/{settings.ApiSettings.image_event_dir}/{image_uuid}.jpg",
                         ear=face_state.ear,
                         mar=face_state.mar,
                         event_type="DROWSINESS",
@@ -160,8 +162,19 @@ class DrowsinessDetectionService:
             # Handle yawning logic
             if face_state.is_yawning:
                 if not self.yawning_notification_flag_sent:
+                    image_uuid = uuid7()
                     logging_default.info("Driver appears to be yawning. Triggering notification.")
-                    self.socket_trigger.save_image(frame, 'DROWSINESS', '', 'UPLOAD_IMAGE')
+                    self.socket_trigger.save_image(frame, image_uuid, 'YAWNING', '', 'UPLOAD_IMAGE')
+                    event = DrowsinessEvent(
+                        id=image_uuid,
+                        vehicle_identification=settings.ApiSettings.vehicle_id,
+                        image=f"{settings.ApiSettings.static_dir}/{settings.ApiSettings.image_event_dir}/{image_uuid}.jpg",
+                        ear=face_state.ear,
+                        mar=face_state.mar,
+                        event_type="YAWNING",
+                        timestamp=datetime.datetime.now()
+                    )
+                    self.drowsiness_event_service.create_event(event)
                     self.yawning_notification_flag_sent = True
             else:
                 self.yawning_notification_flag_sent = False

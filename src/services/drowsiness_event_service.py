@@ -3,9 +3,9 @@ from typing import List
 from uuid import UUID
 
 from sqlmodel import Session, select
-from src.utils.logging import logging_default
 
 from src.domain.entity.drowsiness_event import DrowsinessEvent
+from src.utils.logging import logging_default
 
 
 class DrowsinessEventService:
@@ -82,7 +82,7 @@ class DrowsinessEventService:
             List[DrowsinessEvent]: A list of all events.
         """
         try:
-            logging_default.info(f"Getting DrowsinessEvent")
+            logging_default.info("Getting DrowsinessEvent")
             statement = select(DrowsinessEvent).order_by(DrowsinessEvent.timestamp.desc())
             events = self.session.exec(statement).all()
             return events
@@ -109,9 +109,8 @@ class DrowsinessEventService:
                 self.session.commit()
                 logging_default.info(f"DrowsinessEvent deleted successfully: ID: {event.id}")
                 return True
-            else:
-                logging_default.warning(f"DrowsinessEvent with ID {event_id} not found for deletion.")
-                return False
+            logging_default.warning(f"DrowsinessEvent with ID {event_id} not found for deletion.")
+            return False
         except Exception as e:
             logging_default.error(f"Error while deleting DrowsinessEvent with ID {event_id}: {str(e)}")
             raise
