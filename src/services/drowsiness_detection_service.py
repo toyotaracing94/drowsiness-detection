@@ -198,7 +198,7 @@ class DrowsinessDetectionService:
                 self.yawning_notification_flag_sent = False
 
         # Draw the annotate in the frame to save them into the result so in task orchestrator can get them
-        detection_result.debug_frame = self.draw(frame, detection_result, True)
+        detection_result.debug_frame = self.draw(frame, detection_result, detection_settings.drowsiness.apply_masking)
 
         return detection_result
     

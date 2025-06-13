@@ -8,8 +8,7 @@
     "refine_landmarks": true,
     "max_number_face_detection": 2,
     "min_detection_confidence": 0.5,
-    "min_tracking_confidence": 0.5,
-    "apply_masking": true
+    "min_tracking_confidence": 0.5
   },
   "pose": {
     "min_detection_confidence" : 0.5,

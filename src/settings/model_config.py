@@ -13,7 +13,6 @@ class FaceMeshConfig(BaseModel):
     max_number_face_detection: int
     min_detection_confidence: float
     min_tracking_confidence: float
-    apply_masking: bool
 
 class PoseConfig(BaseModel):
     min_detection_confidence: float
