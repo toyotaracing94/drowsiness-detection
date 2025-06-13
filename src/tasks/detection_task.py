@@ -118,6 +118,17 @@ class DetectionTask:
             # Save the processed 
             frame_buffer.update_processed(processed_frame)
 
+            # Exposing facial metrics to websocket communication
+            if drowsiness_detection_result.faces:
+                face = drowsiness_detection_result.faces[0]
+                frame_buffer.update_facial_metrics(face.ear, face.mar, face.is_drowsy, face.is_yawning)
+            else:
+                frame_buffer.update_facial_metrics(0, 0, False, False)
+
+            # Exposing recent detected event to websocket communication
+            if drowsiness_detection_result:
+                frame_buffer.update_drowsiness_event_recent(drowsiness_detection_result.drowsiness_event, drowsiness_detection_result.yawning_event)
+
             time.sleep(0.01)
 
     def draw_drowsiness_result(self, processed_frame, result : DrowsinessDetectionResult):

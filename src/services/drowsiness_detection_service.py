@@ -150,6 +150,8 @@ class DrowsinessDetectionService:
                     )
                     self.drowsiness_event_service.create_event(event)
                     self.drowsiness_notification_flag_sent = True
+                    detection_result.drowsiness_event = str(image_uuid)
+
             else:
                 if self.drowsiness_start_time is not None:
                     duration = time.time() - self.drowsiness_start_time
@@ -176,6 +178,7 @@ class DrowsinessDetectionService:
                     )
                     self.drowsiness_event_service.create_event(event)
                     self.yawning_notification_flag_sent = True
+                    detection_result.yawning_event = str(image_uuid)
             else:
                 self.yawning_notification_flag_sent = False
 
