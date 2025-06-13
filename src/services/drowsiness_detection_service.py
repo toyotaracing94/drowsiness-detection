@@ -2,6 +2,7 @@ import datetime
 import threading
 import time
 
+import cv2
 import numpy as np
 from uuid6 import uuid7
 
@@ -12,6 +13,19 @@ from src.lib.drowsiness_detection import DrowsinessDetection
 from src.lib.socket_trigger import SocketTrigger
 from src.services.drowsiness_event_service import DrowsinessEventService
 from src.settings.app_config import settings
+from src.utils.drawing_utils import (
+    draw_face_bounding_box,
+    draw_head_pose_direction,
+    draw_landmarks,
+)
+from src.utils.landmark_constants import (
+    INNER_LIPS_CONNECTIONS,
+    LEFT_EYE_CONNECTIONS,
+    LEFT_EYEBROW_CONNECTIONS,
+    OUTER_LIPS_CONNECTIONS,
+    RIGHT_EYE_CONNECTIONS,
+    RIGHT_EYEBROW_CONNECTIONS,
+)
 from src.utils.logging import logging_default
 
 
@@ -151,7 +165,6 @@ class DrowsinessDetectionService:
                     self.drowsiness_event_service.create_event(event)
                     self.drowsiness_notification_flag_sent = True
                     detection_result.drowsiness_event = str(image_uuid)
-
             else:
                 if self.drowsiness_start_time is not None:
                     duration = time.time() - self.drowsiness_start_time
@@ -182,4 +195,69 @@ class DrowsinessDetectionService:
             else:
                 self.yawning_notification_flag_sent = False
 
-        return detection_result        
+        # Draw the annotate in the frame to save them into the result so in task orchestrator can get them
+        detection_result.debug_frame = self.draw(frame, detection_result)
+
+        return detection_result
+    
+    def draw(self, frame : np.ndarray, result : DrowsinessDetectionResult) -> np.ndarray:
+        """
+        Draws visual annotations on the processed video frame for detected faces, including 
+        bounding boxes, facial landmarks, and detection results such as drowsiness, yawning, 
+        and head pose direction.
+
+        Parameters
+        ----------
+        frame : np.ndarray
+            The image frame (typically from a video stream) on which the annotations will be drawn.
+
+        result : DrowsinessDetectionResult
+            An object containing the results of face detection and drowsiness analysis. It includes
+            information about each detected face, such as landmarks, drowsiness state, yawning state,
+            and head pose angles.
+
+        Returns
+        -------
+        np.ndarray
+            The annotated image frame with visual indicators for each detected face.
+        """
+        annotated_frame = frame.copy()
+
+        for face in result.faces:
+            landmark = face.face_landmark
+            if not landmark:
+                continue 
+
+            # Draw bounding box (you must have your own method for this)
+            _, y_min, x_max, _ = draw_face_bounding_box(annotated_frame, landmark, face.face_id)
+
+            # Draw drowsiness status
+            if face.is_drowsy:
+                cv2.putText(annotated_frame, "Drowsy!", (x_max + 10, y_min + 45),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
+
+            # Draw yawning status
+            if face.is_yawning:
+                cv2.putText(annotated_frame, "Yawning!", (x_max + 10, y_min + 70),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 0, 255), 2)
+
+            # Drawing Landmarks
+            draw_landmarks(annotated_frame, landmark, LEFT_EYE_CONNECTIONS)
+            draw_landmarks(annotated_frame, landmark, LEFT_EYEBROW_CONNECTIONS)
+            draw_landmarks(annotated_frame, landmark, RIGHT_EYE_CONNECTIONS)
+            draw_landmarks(annotated_frame, landmark, RIGHT_EYEBROW_CONNECTIONS)
+            draw_landmarks(annotated_frame, landmark, OUTER_LIPS_CONNECTIONS)
+            draw_landmarks(annotated_frame, landmark, INNER_LIPS_CONNECTIONS)
+
+            # Draw Head pose direction
+            draw_head_pose_direction(annotated_frame, landmark, face.x_angle, face.y_angle)
+            direction_text = "Looking Forward"
+            if face.y_angle < -10: direction_text = "Looking Left"
+            elif face.y_angle > 10: direction_text = "Looking Right"
+            elif face.x_angle < -10: direction_text = "Looking Down"
+            elif face.x_angle > 10: direction_text = "Looking Up"
+            direction_text = direction_text
+
+            cv2.putText(annotated_frame, direction_text, (x_max + 10, y_min + 20),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
+        return annotated_frame

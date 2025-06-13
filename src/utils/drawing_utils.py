@@ -1,7 +1,9 @@
+from datetime import datetime
+import numpy as np
 import cv2
 
 
-def draw_landmarks(image, landmarks, connections, color_lines=(0, 255, 0), color_points=(0, 255, 0), size=1):
+def draw_landmarks(image : np.ndarray, landmarks, connections, color_lines=(0, 255, 0), color_points=(0, 255, 0), size=1):
     """
     Draws lines between specified pairs of normalized landmarks.
 
@@ -25,7 +27,7 @@ def draw_landmarks(image, landmarks, connections, color_lines=(0, 255, 0), color
         cv2.line(image, pt1, pt2, color_lines, thickness=size)
         cv2.circle(image, pt2, size + 1, color_points, -1)
 
-def draw_face_bounding_box(frame, face_landmark, face_index):
+def draw_face_bounding_box(frame : np.ndarray, face_landmark, face_index):
     """
     Draws an bounding box based on the face landmark that was given
 
@@ -53,7 +55,7 @@ def draw_face_bounding_box(frame, face_landmark, face_index):
                 cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
     return x_min, y_min, x_max, y_max
 
-def draw_head_pose_direction(image, face_landmark, x_angle, y_angle, color=(0, 0, 255)):
+def draw_head_pose_direction(image : np.ndarray, face_landmark, x_angle, y_angle, color=(0, 0, 255)):
     """
     Draws an arrow indicating head pose direction based on face landmarks and rotation angles.
 
@@ -79,7 +81,7 @@ def draw_head_pose_direction(image, face_landmark, x_angle, y_angle, color=(0, 0
     # Draw the arrowed line
     cv2.arrowedLine(image, p1, p2, color, thickness=2, tipLength=0.3)
 
-def draw_fps(image, fps_text : str, font_scale : int = 0.7, color=(0, 255, 255), thickness : int = 2, padding : int = 10):
+def draw_fps(image : np.ndarray, fps_text : str, font_scale : int = 0.7, color=(0, 255, 255), thickness : int = 2, padding : int = 10):
     # Get the text size
     (text_width, text_height), baseline = cv2.getTextSize(fps_text, cv2.FONT_HERSHEY_SIMPLEX, font_scale, thickness)
     # Coordinates for top-right corner with padding
@@ -89,3 +91,41 @@ def draw_fps(image, fps_text : str, font_scale : int = 0.7, color=(0, 255, 255),
     cv2.rectangle(image, (x - 5, y - text_height - 5), (x + text_width + 5, y + 5), (0, 0, 0), -1)
     # Draw the FPS text on the image
     cv2.putText(image, fps_text, (x, y), cv2.FONT_HERSHEY_SIMPLEX, font_scale, color, thickness)
+
+def draw_timestamp(frame : np.ndarray, position=(10, 30), font_scale=0.6, thickness=2, fmt="%Y-%m-%d %H:%M:%S"):
+    """
+    Draws a timestamp on the given video frame, automatically choosing text color based on frame brightness.
+
+    Parameters:
+    ----------
+    frame : np.ndarray
+        The video frame on which the timestamp will be drawn.
+
+    position : tuple, optional
+        Coordinates (x, y) for the bottom-left corner of the timestamp text. Default is (10, 30).
+
+    font_scale : float, optional
+        Font scale for the text. Default is 0.7.
+
+    thickness : int, optional
+        Thickness of the text stroke. Default is 2.
+
+    fmt : str, optional
+        Format string for the timestamp (uses `datetime.strftime`). Default is "%Y-%m-%d %H:%M:%S".
+
+    Returns:
+    -------
+    np.ndarray
+        The frame with the timestamp drawn on it.
+    """
+    # Estimate brightness by converting to grayscale and taking mean pixel value
+    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    brightness = np.mean(gray)
+
+    # Choose text color: black for bright frames, white for dark ones
+    color = (0, 0, 0) if brightness > 127 else (255, 255, 255)
+
+    # Draw timestamp
+    timestamp = datetime.now().strftime(fmt)
+    cv2.putText(frame, timestamp, position, cv2.FONT_HERSHEY_SIMPLEX, font_scale, color, thickness)
+    return frame

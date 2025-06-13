@@ -399,13 +399,6 @@ class DrowsinessDetection():
                 x_angle, y_angle, _ = self.estimate_head_pose(original_frame, face_landmark,HEAD_POSE_POINTS)
                 face_result.x_angle = x_angle
                 face_result.y_angle = y_angle
-                
-                direction_text = "Looking Forward"
-                if y_angle < -10: direction_text = "Looking Left"
-                elif y_angle > 10: direction_text = "Looking Right"
-                elif x_angle < -10: direction_text = "Looking Down"
-                elif x_angle > 10: direction_text = "Looking Up"
-                face_result.direction_text = direction_text
 
                 # Get the left-eye and right-eye landmark and mouth landmark
                 left_eye, right_eye = self.extract_eye_landmark(face_landmark, LEFT_EYE_POINTS, RIGHT_EYE_POINTS, original_frame.shape[1], original_frame.shape[0])

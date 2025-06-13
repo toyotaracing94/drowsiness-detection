@@ -4,6 +4,12 @@ import numpy as np
 from src.domain.dto.hands_detection_result import HandsDetectionResult
 from src.lib.hands_detection import HandsDetection
 from src.lib.socket_trigger import SocketTrigger
+from src.utils.drawing_utils import (
+    draw_landmarks,
+)
+from src.utils.landmark_constants import (
+    HAND_CONNECTIONS,
+)
 from src.utils.logging import logging_default
 
 
@@ -42,4 +48,32 @@ class HandsDetectionService:
             draw directly to the image
         """
         detection_result = self.hand_detector.detect(frame)
+        
+        # Draw the annotate in the frame to save them into the result so in task orchestrator can get them
+        detection_result.debug_frame = self.draw(frame, detection_result)
+
         return detection_result
+    
+    def draw(self, frame : np.ndarray, result : HandsDetectionResult) -> np.ndarray:
+        """
+        Draws hand landmarks on the processed video frame for each detected hand.
+
+        Parameters
+        ----------
+        processed_frame : np.ndarray
+            The video frame to be annotated with hand landmarks.
+
+        result : HandDetectionResult
+            The detection result containing a list of hand states. Each hand state may include
+            hand landmarks if a hand is detected in the frame.
+
+        Returns
+        -------
+        np.ndarray
+            The annotated image frame with hand landmarks drawn.
+        """
+        annotated_frame = frame.copy()
+        for hand_state in result.hands:
+            if hand_state.hand_landmark is not None:
+                draw_landmarks(annotated_frame, hand_state.hand_landmark, HAND_CONNECTIONS, color_points=(0, 0, 0))
+        return annotated_frame
