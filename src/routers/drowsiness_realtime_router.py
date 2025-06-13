@@ -37,7 +37,7 @@ def drowsiness_realtime_router(frame_buffer : FrameBuffer):
         )
     
     @router.websocket("/data/facialmetrics")
-    async def live_video_stream(websocket: WebSocket):
+    async def stream_facial_metrics_data(websocket: WebSocket):
         await websocket.accept()
         try:
             while True:
@@ -51,9 +51,33 @@ def drowsiness_realtime_router(frame_buffer : FrameBuffer):
                     # Default values if no metrics are available
                     await websocket.send_json({"ear": 0.0, "mar": 0.0, "is_drowsy" : False, "is_calling" : "false"})
 
-        except WebSocketDisconnect:
-            logging_default.info("A client has been disconnected from WebSocket")
+                # Hack for now
+                # Small delay to prevent busy loop and potential client overload
+                await asyncio.sleep(0.01)
 
+        except WebSocketDisconnect:
+            logging_default.info("A client has been disconnected from WebSocket Facial Metrics")
+    
+    @router.websocket("/notification/drowsiness/recent")
+    async def stream_recent_drowsiness_data(websocket: WebSocket):
+        await websocket.accept()
+        try:
+            while True:
+                # Run to get the recent drowsiness event happen in a non-blocking manner
+                drowsiness_event_metrics = await asyncio.to_thread(frame_buffer.get_drowsiness_event_recent)
+                if (drowsiness_event_metrics.drowsiness_event):
+                    await websocket.send_json(drowsiness_event_metrics.drowsiness_event)
+                if (drowsiness_event_metrics.yawning_event):
+                    await websocket.send_json(drowsiness_event_metrics.yawning_event)
+
+                # Hack for now : Reset the frame
+                # If I add sleep instead, there is no guarantee that the timing that I set will match, if
+                # set them to slow, it risk I don't get the latest data
+                # if to fast, I just get another duplicate data
+                await asyncio.to_thread(frame_buffer.update_drowsiness_event_recent, None, None)
+
+        except WebSocketDisconnect:
+            logging_default.info("A client has been disconnected from WebSocket Drowsiness Recent Event")
 
 
     return router

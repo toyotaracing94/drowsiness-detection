@@ -19,3 +19,5 @@ class FaceDrowsinessState:
 @dataclass
 class DrowsinessDetectionResult:
     faces: List[FaceDrowsinessState] = field(default_factory=list)
+    drowsiness_event: Optional[str] = None
+    yawning_event: Optional[str] = None
