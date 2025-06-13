@@ -87,7 +87,9 @@ class DetectionTask:
 
             # Draw the result
             if drowsiness_detection_result:
-                processed_frame = drowsiness_service.draw(processed_frame, drowsiness_detection_result)
+                processed_frame = drowsiness_service.draw(processed_frame, drowsiness_detection_result, False)
+                frame_buffer.update_debug(drowsiness_detection_result.debug_frame)
+            
             if phone_detection_result:
                 processed_frame = phone_detection_service.draw(processed_frame, phone_detection_result)
             if hands_detection_result:

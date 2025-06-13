@@ -8,6 +8,7 @@ from sqlmodel import Session
 from src.infrastructure.migrate import run_migrations
 from src.services.drowsiness_event_service import DrowsinessEventService
 from src.settings.app_config import settings
+from src.settings.model_config import model_settings
 from src.infrastructure.session import init_db, engine
 
 from src.lib.socket_trigger import SocketTrigger
@@ -38,9 +39,9 @@ run_migrations()
 db_session = Session(engine)
 drowsiness_event_service = DrowsinessEventService(db_session)
 
-drowsiness_service = DrowsinessDetectionService(buzzer, socket_trigger, drowsiness_event_service, settings.PipelineSettings.inference_engine)
-phone_detection_service = PhoneDetectionService(socket_trigger, settings.PipelineSettings.inference_engine)
-hand_service = HandsDetectionService(socket_trigger, settings.PipelineSettings.inference_engine)
+drowsiness_service = DrowsinessDetectionService(buzzer, socket_trigger, drowsiness_event_service)
+phone_detection_service = PhoneDetectionService(socket_trigger)
+hand_service = HandsDetectionService(socket_trigger)
 
 detection_task = DetectionTask(settings.PipelineSettings)
 

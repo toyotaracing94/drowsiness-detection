@@ -5,6 +5,9 @@ import numpy as np
 from src.domain.dto.phone_detection_result import PhoneDetectionResult
 from src.lib.phone_detection import PhoneDetection
 from src.lib.socket_trigger import SocketTrigger
+from src.settings.app_config import settings
+from src.settings.detection_config import detection_settings
+from src.settings.model_config import model_settings
 from src.utils.drawing_utils import (
     draw_landmarks,
 )
@@ -15,10 +18,10 @@ from src.utils.logging import logging_default
 
 
 class PhoneDetectionService:
-    def __init__(self, socket_trigger : SocketTrigger, inference_engine : str = None):
+    def __init__(self, socket_trigger : SocketTrigger):
         logging_default.info("Initiated Phone Detection Service")
 
-        self.phone_detection = PhoneDetection("config/pose_detection_settings.json", inference_engine=inference_engine)
+        self.phone_detection = PhoneDetection(model_settings.pose, detection_settings.phone_detection , inference_engine=settings.PipelineSettings.inference_engine)
         self.socket_trigger = socket_trigger
     
     def process_frame(self, frame : np.ndarray) -> PhoneDetectionResult:

@@ -1,6 +1,7 @@
 from datetime import datetime
-import numpy as np
+
 import cv2
+import numpy as np
 
 
 def draw_landmarks(image : np.ndarray, landmarks, connections, color_lines=(0, 255, 0), color_points=(0, 255, 0), size=1):

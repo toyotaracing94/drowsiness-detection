@@ -1,0 +1,12 @@
+{
+  "drowsiness": {
+    "eye_aspect_ratio_threshold": 0.25,
+    "eye_aspect_ratio_consec_frames": 48,
+    "mouth_aspect_ration_threshold": 1.5,
+    "mouth_aspect_ration_consec_frames": 15,
+    "apply_masking": true
+  },
+  "phone_detection" : {
+    "distance_threshold" : 150
+  }
+}

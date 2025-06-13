@@ -4,6 +4,8 @@ import numpy as np
 from src.domain.dto.hands_detection_result import HandsDetectionResult
 from src.lib.hands_detection import HandsDetection
 from src.lib.socket_trigger import SocketTrigger
+from src.settings.app_config import settings
+from src.settings.model_config import model_settings
 from src.utils.drawing_utils import (
     draw_landmarks,
 )
@@ -14,10 +16,10 @@ from src.utils.logging import logging_default
 
 
 class HandsDetectionService:
-    def __init__(self, socket_trigger : SocketTrigger, inference_engine : str = None):
+    def __init__(self, socket_trigger : SocketTrigger):
         logging_default.info("Initiated Hands Detection Service")
 
-        self.hand_detector = HandsDetection("config/pose_detection_settings.json", inference_engine=inference_engine)
+        self.hand_detector = HandsDetection(model_settings.hands, inference_engine=settings.PipelineSettings.inference_engine)
         self.socket_trigger = socket_trigger
     
     def process_frame(self, frame : np.ndarray) -> HandsDetectionResult:

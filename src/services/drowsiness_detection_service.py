@@ -13,6 +13,8 @@ from src.lib.drowsiness_detection import DrowsinessDetection
 from src.lib.socket_trigger import SocketTrigger
 from src.services.drowsiness_event_service import DrowsinessEventService
 from src.settings.app_config import settings
+from src.settings.detection_config import detection_settings
+from src.settings.model_config import model_settings
 from src.utils.drawing_utils import (
     draw_face_bounding_box,
     draw_head_pose_direction,
@@ -30,12 +32,12 @@ from src.utils.logging import logging_default
 
 
 class DrowsinessDetectionService:
-    def __init__(self, buzzer : BaseBuzzer, socket_trigger : SocketTrigger, drowsiness_event_service: DrowsinessEventService, inference_engine : str = None):
+    def __init__(self, buzzer : BaseBuzzer, socket_trigger : SocketTrigger, drowsiness_event_service: DrowsinessEventService):
         logging_default.info("Initiated Drowsiness Services")
 
         self.buzzer = buzzer
         self.socket_trigger = socket_trigger
-        self.drowsiness_detector = DrowsinessDetection("config/drowsiness_detection_settings.json", inference_engine=inference_engine)
+        self.drowsiness_detector = DrowsinessDetection(model_settings.face, detection_settings.drowsiness ,inference_engine=settings.PipelineSettings.inference_engine)
         self.drowsiness_event_service = drowsiness_event_service
 
         self.drowsiness_start_time = None
@@ -196,11 +198,11 @@ class DrowsinessDetectionService:
                 self.yawning_notification_flag_sent = False
 
         # Draw the annotate in the frame to save them into the result so in task orchestrator can get them
-        detection_result.debug_frame = self.draw(frame, detection_result)
+        detection_result.debug_frame = self.draw(frame, detection_result, True)
 
         return detection_result
     
-    def draw(self, frame : np.ndarray, result : DrowsinessDetectionResult) -> np.ndarray:
+    def draw(self, frame : np.ndarray, result : DrowsinessDetectionResult, draw_masking : bool) -> np.ndarray:
         """
         Draws visual annotations on the processed video frame for detected faces, including 
         bounding boxes, facial landmarks, and detection results such as drowsiness, yawning, 
@@ -222,6 +224,22 @@ class DrowsinessDetectionService:
             The annotated image frame with visual indicators for each detected face.
         """
         annotated_frame = frame.copy()
+
+        # Draw masking
+        if draw_masking:
+            height, width = annotated_frame.shape[:2]
+            bottom_left = (0, height - 1)
+            bottom_right = (width - 1, height - 1)
+            top_middle = (width // 2, 0)
+
+            # Draw the masking and the points
+            triangle_cnt = np.array([bottom_left, bottom_right, top_middle], dtype=np.int32)
+            cv2.polylines(annotated_frame, [triangle_cnt], isClosed=True, color=(0, 255, 0), thickness=2)
+            cv2.circle(annotated_frame, top_middle, radius=6, color=(0, 0, 255), thickness=-1)
+            overlay = annotated_frame.copy()
+            cv2.fillPoly(overlay, [triangle_cnt], color=(0, 0, 0))
+            alpha = 0.5
+            annotated_frame = cv2.addWeighted(overlay, alpha, annotated_frame, 1 - alpha, 0)
 
         for face in result.faces:
             landmark = face.face_landmark

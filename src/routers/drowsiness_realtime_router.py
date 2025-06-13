@@ -4,6 +4,7 @@ from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from fastapi.responses import StreamingResponse
 
 from src.streaming.drowsiness_streaming import (
+    stream_debug_camera_feed,
     stream_processed_drowsiness_feed,
     stream_raw_camera_feed,
 )
@@ -33,6 +34,17 @@ def drowsiness_realtime_router(frame_buffer : FrameBuffer):
     def video_drowsiness_feed():
         return StreamingResponse(
             stream_processed_drowsiness_feed(frame_buffer),
+            media_type="multipart/x-mixed-replace; boundary=frame"
+        )
+    
+    @router.get(
+        "/video/debug",
+        summary="Live of debug one of detection result frame of video feed from the camera",
+        description="Returns a live video stream (MJPEG). Use a browser instead of Swagger to view."
+    )
+    def video_debug_feed():
+        return StreamingResponse(
+            stream_debug_camera_feed(frame_buffer),
             media_type="multipart/x-mixed-replace; boundary=frame"
         )
     
