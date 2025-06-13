@@ -39,6 +39,7 @@ def drowsiness_realtime_router(frame_buffer : FrameBuffer):
     @router.websocket("/data/facialmetrics")
     async def stream_facial_metrics_data(websocket: WebSocket):
         await websocket.accept()
+        logging_default.info("A client has been connected to WebSocket Facial Metrics")
         try:
             while True:
                 # Run the get_facial_metrics function in a non-blocking manner
@@ -58,9 +59,10 @@ def drowsiness_realtime_router(frame_buffer : FrameBuffer):
         except WebSocketDisconnect:
             logging_default.info("A client has been disconnected from WebSocket Facial Metrics")
     
-    @router.websocket("/notification/drowsiness/recent")
+    @router.websocket("/notification/drowsiness")
     async def stream_recent_drowsiness_data(websocket: WebSocket):
         await websocket.accept()
+        logging_default.info("A client has been connected to WebSocket Drowsiness Recent Event")
         try:
             while True:
                 # Run to get the recent drowsiness event happen in a non-blocking manner
