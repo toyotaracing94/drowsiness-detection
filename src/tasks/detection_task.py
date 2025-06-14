@@ -1,6 +1,7 @@
 import time
 
 import cv2
+import numpy as np
 
 from src.hardware.camera.base_camera import BaseCamera
 from src.services.drowsiness_detection_service import DrowsinessDetectionService
@@ -70,6 +71,9 @@ class DetectionTask:
             original_frame = cv2.flip(original_frame, 1)
             processed_frame = original_frame.copy()
 
+            # Draw the result
+            debug_frames = []
+
             # Draw timestamp on original frame
             draw_timestamp(original_frame)
 
@@ -80,20 +84,26 @@ class DetectionTask:
 
             if self.drowsiness_model_run:
                 drowsiness_detection_result = drowsiness_service.process_frame(original_frame)
+                debug_frames.append(drowsiness_detection_result.debug_frame)
+
             if self.phone_detection_model_run:
                 phone_detection_result = phone_detection_service.process_frame(original_frame)
+                debug_frames.append(phone_detection_result.debug_frame)
+
             if self.hands_detection_model_run:
                 hands_detection_result = hand_detection_service.process_frame(original_frame)
+                debug_frames.append(hands_detection_result.debug_frame)
 
             # Draw the result
             if drowsiness_detection_result:
                 processed_frame = drowsiness_service.draw(processed_frame, drowsiness_detection_result, False)
-                frame_buffer.update_debug(drowsiness_detection_result.debug_frame)
-            
             if phone_detection_result:
                 processed_frame = phone_detection_service.draw(processed_frame, phone_detection_result)
             if hands_detection_result:
                 processed_frame = hand_detection_service.draw(processed_frame, hands_detection_result)
+
+            # Process the debug frame
+            debug_frame = self.combine_debug_frames(debug_frames)
 
             # Draw the FPS
             # FPS calculation
@@ -108,6 +118,7 @@ class DetectionTask:
             # Save the frame to the shared global instance
             frame_buffer.update_raw(original_frame)
             frame_buffer.update_processed(processed_frame)
+            frame_buffer.update_debug(debug_frame)
 
             # Exposing facial metrics to websocket communication
             if drowsiness_detection_result.faces:
@@ -121,3 +132,31 @@ class DetectionTask:
                 frame_buffer.update_drowsiness_event_recent(drowsiness_detection_result.drowsiness_event, drowsiness_detection_result.yawning_event)
 
             time.sleep(0.01)
+
+    def combine_debug_frames(self, frames: list[np.ndarray], concat_axis: str = "horizontal") -> np.ndarray:
+        """
+        Combines a list of debug frames into a single image.
+
+        Parameters:
+            frames (List[np.ndarray]): List of debug frames to combine.
+            concat_axis (str): 'horizontal' or 'vertical' for stacking direction.
+
+        Returns:
+            np.ndarray or None: Combined debug frame or None if input is empty or failed.
+        """
+        if not frames:
+            return None
+        
+        try:
+            if concat_axis == "horizontal":
+                target_height = min(f.shape[0] for f in frames)
+                resized = [cv2.resize(f, (int(f.shape[1] * target_height / f.shape[0]), target_height)) for f in frames]
+                return cv2.hconcat(resized)
+            if concat_axis == "vertical":
+                target_width = min(f.shape[1] for f in frames)
+                resized = [cv2.resize(f, (target_width, int(f.shape[0] * target_width / f.shape[1]))) for f in frames]
+                return cv2.vconcat(resized)
+            raise ValueError("concat_axis must be 'horizontal' or 'vertical'")
+        except Exception as e:
+            logging_default.warning(f"Failed to combine debug frames: {e}")
+            return None
