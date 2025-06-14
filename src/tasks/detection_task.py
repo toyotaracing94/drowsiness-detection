@@ -2,6 +2,7 @@ import time
 
 import cv2
 import numpy as np
+import os
 
 from src.hardware.camera.base_camera import BaseCamera
 from src.services.drowsiness_detection_service import DrowsinessDetectionService
@@ -68,9 +69,11 @@ class DetectionTask:
                 time.sleep(0.01)
                 continue
             
-            original_frame = cv2.flip(original_frame, 1)
-            processed_frame = original_frame.copy()
+            # Don't flip when in Raspberry Pi or in Linux, as it use 3rd Party Camera rather Built-in Camera
+            if os.name == "nt":
+                original_frame = cv2.flip(original_frame, 1)
 
+            processed_frame = original_frame.copy()
             # Draw the result
             debug_frames = []
 
