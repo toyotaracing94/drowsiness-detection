@@ -57,3 +57,23 @@ def stream_processed_drowsiness_feed(frame_buffer : FrameBuffer):
                b'Content-Type: image/jpeg\r\n\r\n' + buffer.tobytes() + b'\r\n')
 
         time.sleep(0.03)
+
+def stream_debug_camera_feed(frame_buffer : FrameBuffer):
+    """
+    This function special for the FastAPI backend controller to continuously captures frames from the camera
+    and return a stream for real-time display transmission
+    """
+    while True:
+        frame = frame_buffer.get_debug()
+        if frame is None:
+            time.sleep(0.03)
+            continue
+
+        success, buffer = cv2.imencode('.jpg', frame)
+        if not success:
+            continue
+
+        yield (b'--frame\r\n'
+               b'Content-Type: image/jpeg\r\n\r\n' + buffer.tobytes() + b'\r\n')
+
+        time.sleep(0.03)

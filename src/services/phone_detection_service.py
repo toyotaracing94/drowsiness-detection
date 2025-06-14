@@ -1,17 +1,27 @@
 
+import cv2
 import numpy as np
 
 from src.domain.dto.phone_detection_result import PhoneDetectionResult
 from src.lib.phone_detection import PhoneDetection
 from src.lib.socket_trigger import SocketTrigger
+from src.settings.app_config import settings
+from src.settings.detection_config import detection_settings
+from src.settings.model_config import model_settings
+from src.utils.drawing_utils import (
+    draw_landmarks,
+)
+from src.utils.landmark_constants import (
+    BODY_POSE_FACE_CONNECTIONS,
+)
 from src.utils.logging import logging_default
 
 
 class PhoneDetectionService:
-    def __init__(self, socket_trigger : SocketTrigger, inference_engine : str = None):
+    def __init__(self, socket_trigger : SocketTrigger):
         logging_default.info("Initiated Phone Detection Service")
 
-        self.phone_detection = PhoneDetection("config/pose_detection_settings.json", inference_engine=inference_engine)
+        self.phone_detection = PhoneDetection(model_settings.pose, detection_settings.phone_detection , inference_engine=settings.PipelineSettings.inference_engine)
         self.socket_trigger = socket_trigger
     
     def process_frame(self, frame : np.ndarray) -> PhoneDetectionResult:
@@ -42,4 +52,46 @@ class PhoneDetectionService:
             draw directly to the image
         """
         detection_result = self.phone_detection.detect(frame)
+
+        # Draw the annotate in the frame to save them into the result so in task orchestrator can get them
+        detection_result.debug_frame = self.draw(frame, detection_result)
+        
         return detection_result
+    
+    def draw(self, frame : np.ndarray, result : PhoneDetectionResult) -> np.ndarray:
+        """
+        Draws visual annotations on the processed video frame for phone usage detection,
+        including call status, estimated distance to the person, and body pose landmarks.
+
+        Parameters
+        ----------
+        frame : np.ndarray
+            The video frame (as a NumPy array) to annotate with phone detection results.
+
+        result : PhoneDetectionResult
+            The result object containing phone usage detection data. Each item in `result.detection`
+            may include the calling status, distance estimate, and body pose landmarks.
+
+        Returns
+        -------
+        np.ndarray
+            The annotated image frame with phone usage indicators and pose visualizations.
+        """
+        annotated_frame = frame.copy()
+
+        for phone_state in result.detection:
+            # Draw the annotated text marking it's calling
+            if phone_state.is_calling:
+                cv2.putText(annotated_frame, "Making a phone call", (50, 150), 
+                            cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+
+            # Draw the distance between wrist and the ear
+            if phone_state.distance is not None:
+                cv2.putText(annotated_frame, f"Distance: {phone_state.distance:.2f}", 
+                            (20, annotated_frame.shape[0] - 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 0), 2)
+
+            # Draw the body landmark of the face
+            if phone_state.body_landmark is not None:
+                draw_landmarks(annotated_frame, phone_state.body_landmark, BODY_POSE_FACE_CONNECTIONS, 
+                            color_lines=(255, 0, 0), color_points=(0, 0, 255))
+        return annotated_frame

@@ -8,7 +8,7 @@ from src.models.hailo.hailo_runtime.hailo_inference_engine import HailoInference
 
 
 class BlazeFacePipeline(BaseModelInference):
-    def __init__(self, config_path : str, hailo_engine : HailoInferenceEngine):
+    def __init__(self, hailo_engine : HailoInferenceEngine):
         super().__init__()
 
         self.hailo_inference = hailo_engine

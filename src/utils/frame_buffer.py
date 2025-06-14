@@ -11,11 +11,13 @@ class FrameBuffer:
     def __init__(self):
         self.raw_frame : np.ndarray = None
         self.processed_frame : np.ndarray = None
+        self.debug_frame : np.ndarray = None
         self.facial_metrics: Optional[FacialMetrics] = None
         self.drowsiness_event_metrics : Optional[DrowsinessEventMetrics] = None
         
         self.raw_lock = Lock()
         self.processed_lock = Lock()
+        self.debug_lock = Lock()
         self.facial_metrics_lock = Lock()
         self.drowsiness_event_lock = Lock()
 
@@ -38,6 +40,16 @@ class FrameBuffer:
         """Get the processed frame."""
         with self.processed_lock:
             return self.processed_frame
+        
+    def update_debug(self, frame):
+        """Update the debug frame."""
+        with self.debug_lock:
+            self.debug_frame = frame
+
+    def get_debug(self):
+        """Get the debug frame."""
+        with self.debug_lock:
+            return self.debug_frame
         
     def update_drowsiness_event_recent(self, drowsiness_event : str, yawning_event : str):
         """Update the recent detected of drowsiness and yawning event"""

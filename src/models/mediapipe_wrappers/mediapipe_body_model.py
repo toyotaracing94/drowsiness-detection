@@ -1,15 +1,15 @@
-import json
 
 import cv2
 import numpy as np
 from mediapipe.python.solutions import pose
 
 from src.models.base_model import BaseModelInference
+from src.settings.model_config import PoseConfig
 from src.utils.logging import logging_default
 
 
 class MediapipeBodyPoseModel(BaseModelInference):
-    def __init__(self, model_settings : str):
+    def __init__(self, model_settings : PoseConfig):
         super().__init__()
 
         # Load Model configurations first 
@@ -18,27 +18,23 @@ class MediapipeBodyPoseModel(BaseModelInference):
         # Initiate the model
         self.load_model(None)
 
-    def load_configurations(self, path : str):
+    def load_configurations(self, config : PoseConfig):
         """
         Load the detection settings from a configuration JSON file.
 
         Parameters
         ----------
-        path : str
-            Path to the configuration file containing threshold values for EAR, MAR, and etc.
+        config : str
+            configuration for pose model
         """
 
         logging_default.info("Loading pose detection configs and model configuration")
-
-        with open(path, 'r') as f:
-            config = json.load(f)
-        
-        self.static_image_mode = config["static_image_mode"]
-        self.smooth_segmentation = config["smooth_segmentation"]
-        self.enable_segmentation = config["enable_segmentation"]
-        self.smooth_landmarks = config["smooth_landmarks"]
-        self.min_tracking_confidence = config["min_tracking_confidence"]
-        self.min_detection_confidence = config["min_detection_confidence"]
+        self.static_image_mode = config.static_image_mode
+        self.smooth_segmentation = config.smooth_segmentation
+        self.enable_segmentation = config.enable_segmentation
+        self.smooth_landmarks = config.smooth_landmarks
+        self.min_tracking_confidence = config.min_tracking_confidence
+        self.min_detection_confidence = config.min_detection_confidence
 
         # Log the configurations loaded
         logging_default.info(

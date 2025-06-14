@@ -1,4 +1,3 @@
-import json
 import math
 
 import cv2
@@ -9,47 +8,58 @@ from src.domain.dto.drowsiness_detection_result import (
     FaceDrowsinessState,
 )
 from src.models.factory_model import get_face_model
+from src.settings.detection_config import DrowsinessConfig
+from src.settings.model_config import FaceMeshConfig
+from src.utils.drawing_utils import (
+    draw_face_bounding_box,
+    draw_head_pose_direction,
+    draw_landmarks,
+)
 from src.utils.landmark_constants import (
     HEAD_POSE_POINTS,
+    INNER_LIPS_CONNECTIONS,
+    LEFT_EYE_CONNECTIONS,
     LEFT_EYE_POINTS,
+    LEFT_EYEBROW_CONNECTIONS,
+    OUTER_LIPS_CONNECTIONS,
     OUTER_LIPS_POINTS,
+    RIGHT_EYE_CONNECTIONS,
     RIGHT_EYE_POINTS,
+    RIGHT_EYEBROW_CONNECTIONS,
 )
 from src.utils.logging import logging_default
 
 
 class DrowsinessDetection():
-    def __init__(self, model_settings_path : str, model_path: str = None, inference_engine : str = None):
+    def __init__(self, model_settings : FaceMeshConfig, detection_settings : DrowsinessConfig, inference_engine : str = None):
         
         # Load Configurations
-        self.load_configuration(model_settings_path)
+        self.load_configuration(detection_settings)
 
         # Get the model
-        self.model = get_face_model(model_settings_path, model_path, inference_engine)
+        self.model = get_face_model(model_settings, inference_engine)
 
         # Counter for the Yawn and Drowsiness
         self.drowsiness_frame_counter = 0
         self.yawn_frame_counter = 0
 
-    def load_configuration(self, path : str) -> None:
+    def load_configuration(self, config : DrowsinessConfig) -> None:
         """
         Load the detection settings from a configuration JSON file.
 
         Parameters
         ----------
-        path : str
+        config : FaceMeshConfig
             Path to the configuration file containing threshold values for EAR, MAR, and etc.
 
         """
-        logging_default.info(f"Loading drowsiness detection configs and model configuration from {path}")
-        
-        with open(path, 'r') as f:
-            config = json.load(f)
+        logging_default.info("Loading drowsiness detection configs and model configuration")
 
-        self.ear_ratio = config["eye_aspect_ratio_threshold"]
-        self.ear_consec_frames = config["eye_aspect_ratio_consec_frames"]
-        self.mouth_aspect_ratio_threshold = config["mouth_aspect_ration_threshold"]
-        self.mouth_aspect_ratio_consec_frames = config["mouth_aspect_ration_consec_frames"]
+        self.ear_ratio = config.eye_aspect_ratio_threshold
+        self.ear_consec_frames = config.eye_aspect_ratio_consec_frames
+        self.mouth_aspect_ratio_threshold = config.mouth_aspect_ration_threshold
+        self.mouth_aspect_ratio_consec_frames = config.mouth_aspect_ration_consec_frames
+        self.apply_triangle_masking = config.apply_masking
 
         logging_default.info(
             f"Loaded config - EAR: {self.ear_ratio}, EAR Frames: {self.ear_consec_frames}, " \
@@ -380,11 +390,33 @@ class DrowsinessDetection():
         """
         return math.sqrt((point1[0] - point2[0]) ** 2 + (point1[1] - point2[1]) ** 2)
     
-    def detects(self, original_frame : np.ndarray) -> DrowsinessDetectionResult:
+    def triangle_masking(self, frame : np.ndarray) -> np.ndarray:
+        height, width = frame.shape[:2]
+
+        # Define the three points of the triangle
+        bottom_left = (0, height - 1)
+        bottom_right = (width - 1, height - 1)
+        top_middle = (width // 2, 0)
+
+        # Create a triangular mask
+        mask = np.zeros_like(frame, dtype=np.uint8)
+        triangle_cnt = np.array([bottom_left, bottom_right, top_middle], dtype=np.int32)
+        cv2.fillPoly(mask, [triangle_cnt], (255, 255, 255))
+
+        # Apply the mask using bitwise AND
+        masked_frame = cv2.bitwise_and(frame, mask)
+        return masked_frame
+
+    def detects(self, frame : np.ndarray) -> DrowsinessDetectionResult:
         """
         Calculating the result of the detection and draw the results
         """
         results = DrowsinessDetectionResult()
+
+        # Preprocess
+        original_frame = frame.copy()
+        if self.apply_triangle_masking:
+            original_frame = self.triangle_masking(original_frame)
 
         # Get the landmarks for the face
         face_landmarks = self.detect_face_landmarks(original_frame)
@@ -399,13 +431,6 @@ class DrowsinessDetection():
                 x_angle, y_angle, _ = self.estimate_head_pose(original_frame, face_landmark,HEAD_POSE_POINTS)
                 face_result.x_angle = x_angle
                 face_result.y_angle = y_angle
-                
-                direction_text = "Looking Forward"
-                if y_angle < -10: direction_text = "Looking Left"
-                elif y_angle > 10: direction_text = "Looking Right"
-                elif x_angle < -10: direction_text = "Looking Down"
-                elif x_angle > 10: direction_text = "Looking Up"
-                face_result.direction_text = direction_text
 
                 # Get the left-eye and right-eye landmark and mouth landmark
                 left_eye, right_eye = self.extract_eye_landmark(face_landmark, LEFT_EYE_POINTS, RIGHT_EYE_POINTS, original_frame.shape[1], original_frame.shape[0])
@@ -431,4 +456,83 @@ class DrowsinessDetection():
 
                 face_id += 1
         return results
+    
+    def draw(self, frame : np.ndarray, result : DrowsinessDetectionResult, draw_masking : bool) -> np.ndarray:
+        """
+        Draws visual annotations on the processed video frame for detected faces, including 
+        bounding boxes, facial landmarks, and detection results such as drowsiness, yawning, 
+        and head pose direction.
+
+        Parameters
+        ----------
+        frame : np.ndarray
+            The image frame (typically from a video stream) on which the annotations will be drawn.
+
+        result : DrowsinessDetectionResult
+            An object containing the results of face detection and drowsiness analysis. It includes
+            information about each detected face, such as landmarks, drowsiness state, yawning state,
+            and head pose angles.
+
+        Returns
+        -------
+        np.ndarray
+            The annotated image frame with visual indicators for each detected face.
+        """
+        annotated_frame = frame.copy()
+
+        # Draw masking
+        if self.apply_triangle_masking:
+            height, width = annotated_frame.shape[:2]
+            bottom_left = (0, height - 1)
+            bottom_right = (width - 1, height - 1)
+            top_middle = (width // 2, 0)
+
+            # Draw the masking and the points
+            triangle_cnt = np.array([bottom_left, bottom_right, top_middle], dtype=np.int32)
+            cv2.polylines(annotated_frame, [triangle_cnt], isClosed=True, color=(0, 255, 0), thickness=2)
+            cv2.circle(annotated_frame, top_middle, radius=6, color=(0, 0, 255), thickness=-1)
+            overlay = annotated_frame.copy()
+            cv2.fillPoly(overlay, [triangle_cnt], color=(0, 0, 0))
+            alpha = 0.5
+            annotated_frame = cv2.addWeighted(overlay, alpha, annotated_frame, 1 - alpha, 0)
+
+        for face in result.faces:
+            landmark = face.face_landmark
+            if not landmark:
+                continue 
+
+            # Draw bounding box (you must have your own method for this)
+            _, y_min, x_max, _ = draw_face_bounding_box(annotated_frame, landmark, face.face_id)
+
+            # Draw drowsiness status
+            if face.is_drowsy:
+                cv2.putText(annotated_frame, "Drowsy!", (x_max + 10, y_min + 45),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
+
+            # Draw yawning status
+            if face.is_yawning:
+                cv2.putText(annotated_frame, "Yawning!", (x_max + 10, y_min + 70),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 0, 255), 2)
+
+            # Drawing Landmarks
+            draw_landmarks(annotated_frame, landmark, LEFT_EYE_CONNECTIONS)
+            draw_landmarks(annotated_frame, landmark, LEFT_EYEBROW_CONNECTIONS)
+            draw_landmarks(annotated_frame, landmark, RIGHT_EYE_CONNECTIONS)
+            draw_landmarks(annotated_frame, landmark, RIGHT_EYEBROW_CONNECTIONS)
+            draw_landmarks(annotated_frame, landmark, OUTER_LIPS_CONNECTIONS)
+            draw_landmarks(annotated_frame, landmark, INNER_LIPS_CONNECTIONS)
+
+            # Draw Head pose direction
+            draw_head_pose_direction(annotated_frame, landmark, face.x_angle, face.y_angle)
+            direction_text = "Looking Forward"
+            if face.y_angle < -10: direction_text = "Looking Left"
+            elif face.y_angle > 10: direction_text = "Looking Right"
+            elif face.x_angle < -10: direction_text = "Looking Down"
+            elif face.x_angle > 10: direction_text = "Looking Up"
+            direction_text = direction_text
+
+            cv2.putText(annotated_frame, direction_text, (x_max + 10, y_min + 20),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
+        return annotated_frame
+
 

@@ -1,15 +1,15 @@
-import json
 
 import cv2
 import numpy as np
 from mediapipe.python.solutions import hands
 
 from src.models.base_model import BaseModelInference
+from src.settings.model_config import HandsConfig
 from src.utils.logging import logging_default
 
 
 class MediapipeHandsModel(BaseModelInference):
-    def __init__(self, model_settings : str):
+    def __init__(self, model_settings : HandsConfig):
         super().__init__()
 
         # Load Model configurations first 
@@ -18,23 +18,19 @@ class MediapipeHandsModel(BaseModelInference):
         # Initiate the model
         self.load_model(None)
 
-    def load_configurations(self, path : str):
+    def load_configurations(self, config : HandsConfig):
         """
         Load the detection of model settings configurations from a configuration JSON file.
 
         Parameters
         ----------
-        path : str
-            Path to the configuration file containing threshold values for EAR, MAR, and etc.
+        path : config
         """
 
-        logging_default.info("Loading pose detection configs and model configuration")
+        logging_default.info("Loading hands detection configs and model configuration")
 
-        with open(path, 'r') as f:
-            config = json.load(f)
-
-        self.min_detection_confidence = config["min_detection_confidence"]
-        self.min_tracking_confidence = config["min_tracking_confidence"]
+        self.min_detection_confidence = config.min_detection_confidence
+        self.min_tracking_confidence = config.min_tracking_confidence
 
         # Log the configurations loaded
         logging_default.info(

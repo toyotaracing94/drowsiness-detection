@@ -2,16 +2,17 @@ import numpy as np
 
 from src.domain.dto.hands_detection_result import HandsDetectionResult, HandState
 from src.models.factory_model import get_hands_pose_model
+from src.settings.model_config import HandsConfig
 from src.utils.landmark_constants import (
     MIDDLE_POINTS,
 )
 
 
 class HandsDetection():
-    def __init__(self, model_settings_path : str, model_path: str = None, inference_engine : str = None):
+    def __init__(self, model_settings : HandsConfig, inference_engine : str = None):
 
         # Get the model
-        self.model = get_hands_pose_model(model_settings_path, model_path, inference_engine)
+        self.model = get_hands_pose_model(model_settings, inference_engine)
 
     def detect_hand_landmarks(self, image : np.ndarray) -> list:
         """

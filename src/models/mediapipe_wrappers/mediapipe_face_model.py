@@ -1,15 +1,15 @@
-import json
 
 import cv2
 import numpy as np
 from mediapipe.python.solutions import face_mesh
 
 from src.models.base_model import BaseModelInference
+from src.settings.model_config import FaceMeshConfig
 from src.utils.logging import logging_default
 
 
 class MediapipeFaceMeshModel(BaseModelInference):
-    def __init__(self, model_settings : str):
+    def __init__(self, model_settings : FaceMeshConfig):
         super().__init__()
 
         # Load Model configurations first 
@@ -19,26 +19,23 @@ class MediapipeFaceMeshModel(BaseModelInference):
         self.load_model(None)
 
 
-    def load_configurations(self, path : str) -> None:
+    def load_configurations(self, config : FaceMeshConfig) -> None:
         """
         Load the detection settings from a configuration JSON file.
 
         Parameters
         ----------
-        path : str
+        config : FaceMeshConfig
             Path to the configuration file containing threshold values for EAR, MAR, and etc.
         """
 
-        logging_default.info("Loading pose detection configs and model configuration")
-
-        with open(path, 'r') as f:
-            config = json.load(f)
+        logging_default.info("Loading face detection configs and model configuration")
         
-        self.static_image_mode = config["static_image_mode"]
-        self.refine_landmarks = config["refine_landmarks"]
-        self.max_number_face_detection = config["max_number_face_detection"]
-        self.min_tracking_confidence = config["min_tracking_confidence"]
-        self.min_detection_confidence = config["min_detection_confidence"]
+        self.static_image_mode = config.static_image_mode
+        self.refine_landmarks = config.refine_landmarks
+        self.max_number_face_detection = config.max_number_face_detection
+        self.min_tracking_confidence = config.min_tracking_confidence
+        self.min_detection_confidence = config.min_detection_confidence
 
         # Log the configurations loaded
         logging_default.info(
@@ -60,9 +57,9 @@ class MediapipeFaceMeshModel(BaseModelInference):
         This function is to load the model of the Mediapipe face model to the class. 
         """
         self.face_mesh = face_mesh.FaceMesh(
-            static_image_mode=False,
+            static_image_mode=self.static_image_mode,
             max_num_faces=self.max_number_face_detection,
-            refine_landmarks=True,
+            refine_landmarks=self.refine_landmarks,
             min_detection_confidence = self.min_detection_confidence,
             min_tracking_confidence = self.min_tracking_confidence
         )

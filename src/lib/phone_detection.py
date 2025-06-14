@@ -4,16 +4,38 @@ import numpy as np
 
 from src.domain.dto.phone_detection_result import PhoneDetectionResult, PhoneState
 from src.models.factory_model import get_body_pose_model
+from src.settings.detection_config import PhoneDetectionConfig
+from src.settings.model_config import PoseConfig
+from src.utils.logging import logging_default
 
 
 class PhoneDetection():
-    def __init__(self, model_settings_path : str, model_path: str = None, inference_engine : str = None):
+    def __init__(self, model_settings : PoseConfig, detection_settings : PhoneDetectionConfig, inference_engine : str = None):
         
-        self.model = get_body_pose_model(model_settings_path, model_path, inference_engine)
+        # Load Configurations
+        self.load_configuration(detection_settings)
+
+        self.model = get_body_pose_model(model_settings, inference_engine)
 
         # Landmarks (for now hardcoded)
         self.right_hand_landmark = [16, 22, 20, 18]
         self.left_hand_landmark = [15, 21, 19, 17]
+
+    def load_configuration(self, config : PhoneDetectionConfig):
+        """
+        Load the detection settings from a configuration JSON file.
+
+        Parameters
+        ----------
+        config : PhoneDetectionConfig
+
+        """
+        logging_default.info("Loading Phone detection configs and model configuration")
+        self.distance_threshold = config.distance_threshold
+
+        logging_default.info(
+            f"Loaded config - Distance Threshold: {self.distance_threshold}"
+        )
 
     def detect_body_pose(self, image : np.ndarray) -> list:
         """
@@ -127,7 +149,7 @@ class PhoneDetection():
             phone_result.body_landmark = body_landmark
 
             is_calling, distance = self.detect_phone_usage(
-                body_landmark, original_frame.shape[1], original_frame.shape[0]
+                body_landmark, original_frame.shape[1], original_frame.shape[0], self.distance_threshold
             )
 
             if is_calling:

@@ -1,32 +1,19 @@
 import time
 
 import cv2
+import numpy as np
+import os
 
-from src.domain.dto.drowsiness_detection_result import DrowsinessDetectionResult
-from src.domain.dto.hands_detection_result import HandsDetectionResult
-from src.domain.dto.phone_detection_result import PhoneDetectionResult
 from src.hardware.camera.base_camera import BaseCamera
 from src.services.drowsiness_detection_service import DrowsinessDetectionService
 from src.services.hand_detection_service import HandsDetectionService
 from src.services.phone_detection_service import PhoneDetectionService
 from src.settings.app_config import PipelineSettings
 from src.utils.drawing_utils import (
-    draw_face_bounding_box,
     draw_fps,
-    draw_head_pose_direction,
-    draw_landmarks,
+    draw_timestamp,
 )
 from src.utils.frame_buffer import FrameBuffer
-from src.utils.landmark_constants import (
-    BODY_POSE_FACE_CONNECTIONS,
-    HAND_CONNECTIONS,
-    INNER_LIPS_CONNECTIONS,
-    LEFT_EYE_CONNECTIONS,
-    LEFT_EYEBROW_CONNECTIONS,
-    OUTER_LIPS_CONNECTIONS,
-    RIGHT_EYE_CONNECTIONS,
-    RIGHT_EYEBROW_CONNECTIONS,
-)
 from src.utils.logging import logging_default
 
 
@@ -82,11 +69,16 @@ class DetectionTask:
                 time.sleep(0.01)
                 continue
             
-            original_frame = cv2.flip(original_frame, 1)
-            processed_frame = original_frame.copy()
+            # Don't flip when in Raspberry Pi or in Linux, as it use 3rd Party Camera rather Built-in Camera
+            if os.name == "nt":
+                original_frame = cv2.flip(original_frame, 1)
 
-            # Save the frame to the shared global instance
-            frame_buffer.update_raw(original_frame)
+            processed_frame = original_frame.copy()
+            # Draw the result
+            debug_frames = []
+
+            # Draw timestamp on original frame
+            draw_timestamp(original_frame)
 
             # Run them into detection service
             drowsiness_detection_result = None
@@ -95,18 +87,26 @@ class DetectionTask:
 
             if self.drowsiness_model_run:
                 drowsiness_detection_result = drowsiness_service.process_frame(original_frame)
+                debug_frames.append(drowsiness_detection_result.debug_frame)
+
             if self.phone_detection_model_run:
                 phone_detection_result = phone_detection_service.process_frame(original_frame)
+                debug_frames.append(phone_detection_result.debug_frame)
+
             if self.hands_detection_model_run:
                 hands_detection_result = hand_detection_service.process_frame(original_frame)
+                debug_frames.append(hands_detection_result.debug_frame)
 
             # Draw the result
             if drowsiness_detection_result:
-                processed_frame = self.draw_drowsiness_result(processed_frame, drowsiness_detection_result)
+                processed_frame = drowsiness_service.draw(processed_frame, drowsiness_detection_result, False)
             if phone_detection_result:
-                processed_frame = self.draw_phone_detection_result(processed_frame, phone_detection_result)
+                processed_frame = phone_detection_service.draw(processed_frame, phone_detection_result)
             if hands_detection_result:
-                processed_frame = self.draw_hands_detection_result(processed_frame, hands_detection_result)
+                processed_frame = hand_detection_service.draw(processed_frame, hands_detection_result)
+
+            # Process the debug frame
+            debug_frame = self.combine_debug_frames(debug_frames)
 
             # Draw the FPS
             # FPS calculation
@@ -115,8 +115,13 @@ class DetectionTask:
             self.prev_time = current_time
             draw_fps(processed_frame, f"FPS : {fps:.2f}")
 
-            # Save the processed 
+            # Draw timestamp on processed frame
+            draw_timestamp(processed_frame)
+
+            # Save the frame to the shared global instance
+            frame_buffer.update_raw(original_frame)
             frame_buffer.update_processed(processed_frame)
+            frame_buffer.update_debug(debug_frame)
 
             # Exposing facial metrics to websocket communication
             if drowsiness_detection_result.faces:
@@ -131,57 +136,30 @@ class DetectionTask:
 
             time.sleep(0.01)
 
-    def draw_drowsiness_result(self, processed_frame, result : DrowsinessDetectionResult):
-        for face in result.faces:
-            landmark = face.face_landmark
-            if not landmark:
-                continue  # skip faces with no landmarks
+    def combine_debug_frames(self, frames: list[np.ndarray], concat_axis: str = "horizontal") -> np.ndarray:
+        """
+        Combines a list of debug frames into a single image.
 
-            # Draw bounding box (you must have your own method for this)
-            _, y_min, x_max, _ = draw_face_bounding_box(processed_frame, landmark, face.face_id)
+        Parameters:
+            frames (List[np.ndarray]): List of debug frames to combine.
+            concat_axis (str): 'horizontal' or 'vertical' for stacking direction.
 
-            # Draw drowsiness status
-            if face.is_drowsy:
-                cv2.putText(processed_frame, "Drowsy!", (x_max + 10, y_min + 50),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
-
-            # Draw yawning status
-            if face.is_yawning:
-                cv2.putText(processed_frame, "Yawning!", (x_max + 10, y_min + 70),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 0, 255), 2)
-
-            # Drawing Landmarks
-            draw_landmarks(processed_frame, landmark, LEFT_EYE_CONNECTIONS)
-            draw_landmarks(processed_frame, landmark, LEFT_EYEBROW_CONNECTIONS)
-            draw_landmarks(processed_frame, landmark, RIGHT_EYE_CONNECTIONS)
-            draw_landmarks(processed_frame, landmark, RIGHT_EYEBROW_CONNECTIONS)
-            draw_landmarks(processed_frame, landmark, OUTER_LIPS_CONNECTIONS)
-            draw_landmarks(processed_frame, landmark, INNER_LIPS_CONNECTIONS)
-
-            # Head pose direction
-            draw_head_pose_direction(processed_frame, landmark, face.x_angle, face.y_angle)
-            cv2.putText(processed_frame, face.direction_text, (x_max + 10, y_min + 20),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
-
-        return processed_frame
-
-    def draw_phone_detection_result(self, processed_frame, result : PhoneDetectionResult):
-        for phone_state in result.detection:
-            if phone_state.is_calling:
-                cv2.putText(processed_frame, "Making a phone call", (50, 150), 
-                            cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
-
-            if phone_state.distance is not None:
-                cv2.putText(processed_frame, f"Distance: {phone_state.distance:.2f}", 
-                            (20, processed_frame.shape[0] - 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 0), 2)
-
-            if phone_state.body_landmark is not None:
-                draw_landmarks(processed_frame, phone_state.body_landmark, BODY_POSE_FACE_CONNECTIONS, 
-                            color_lines=(255, 0, 0), color_points=(0, 0, 255))
-        return processed_frame
-
-    def draw_hands_detection_result(self, processed_frame, result : HandsDetectionResult):
-        for hand_state in result.hands:
-            if hand_state.hand_landmark is not None:
-                draw_landmarks(processed_frame, hand_state.hand_landmark, HAND_CONNECTIONS, color_points=(0, 0, 0))
-        return processed_frame
+        Returns:
+            np.ndarray or None: Combined debug frame or None if input is empty or failed.
+        """
+        if not frames:
+            return None
+        
+        try:
+            if concat_axis == "horizontal":
+                target_height = min(f.shape[0] for f in frames)
+                resized = [cv2.resize(f, (int(f.shape[1] * target_height / f.shape[0]), target_height)) for f in frames]
+                return cv2.hconcat(resized)
+            if concat_axis == "vertical":
+                target_width = min(f.shape[1] for f in frames)
+                resized = [cv2.resize(f, (target_width, int(f.shape[0] * target_width / f.shape[1]))) for f in frames]
+                return cv2.vconcat(resized)
+            raise ValueError("concat_axis must be 'horizontal' or 'vertical'")
+        except Exception as e:
+            logging_default.warning(f"Failed to combine debug frames: {e}")
+            return None
