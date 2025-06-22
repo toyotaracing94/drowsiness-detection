@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Box, CssBaseline, Toolbar, Typography } from "@mui/material";
+import { Box, Toolbar } from "@mui/material";
 import AppHeader from "./components/AppHeader";
 import SideBarNavigation from "./components/SideBarNavigation";
 import DashboardPage from "./pages/DashboardPage";
@@ -7,7 +7,7 @@ import DashboardPage from "./pages/DashboardPage";
 const drawerWidth = 240;
 
 const App: React.FC = () => {
-  const [drawerOpen, setDrawerOpen] = useState(true);
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   const handleDrawerClose = () => setDrawerOpen(false);
   const toggleDrawer = () => setDrawerOpen(prev => !prev);
