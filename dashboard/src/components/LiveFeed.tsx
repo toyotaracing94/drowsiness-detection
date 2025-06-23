@@ -5,13 +5,13 @@ interface LiveFeedProps {
   src: string;
   title?: string;
   fallbackSrc?: string;
-  checkIntervalMs?: number; // how often to retry, default 5000ms
+  checkIntervalMs?: number;
 }
 
 const LiveFeed: React.FC<LiveFeedProps> = ({
   src,
   title = "Live Camera Feed",
-  fallbackSrc = "/images/no-stream.png",
+  fallbackSrc = "src/assets/no-image-available.jpg",
   checkIntervalMs = 5000,
 }) => {
   const [imgSrc, setImgSrc] = useState(src);
@@ -26,28 +26,30 @@ const LiveFeed: React.FC<LiveFeedProps> = ({
   // Function to handle successful image load
   const handleImageLoad = () => {
     setHasError(false);
-    setImgSrc(src);
   };
 
   useEffect(() => {
-    if (hasError) {
-      // When error state is true, try to reload the original src every checkIntervalMs milliseconds
-      const interval = setInterval(() => {
-        // Create a new Image object to test if src is reachable
-        const testImg = new Image();
-        testImg.src = src + "?timestamp=" + new Date().getTime();
-        testImg.onload = () => {
-          setHasError(false);
-          setImgSrc(src);
-        };
-        testImg.onerror = () => {
-          // still error, keep fallback
-        };
-      }, checkIntervalMs);
+    if (!hasError) return;
 
-      return () => clearInterval(interval);
-    }
-  }, [hasError, src, checkIntervalMs, fallbackSrc]);
+    const interval = setInterval(() => {
+      const testImg = new Image();
+      testImg.src = src + "?timestamp=" + new Date().getTime();
+      testImg.onload = () => {
+        // Only update if the image is currently showing the fallback
+        setHasError(false);
+
+        setImgSrc((currentSrc) => {
+          // Only change if we're currently showing the fallback
+          if (currentSrc === fallbackSrc) {
+            return src;
+          }
+          return currentSrc;
+        });
+      };
+    }, checkIntervalMs);
+
+    return () => clearInterval(interval);
+  }, [hasError, src, fallbackSrc, checkIntervalMs]);
 
   return (
     <Paper variant="outlined" sx={{ p: 2, mb: 2 }}>
@@ -59,13 +61,12 @@ const LiveFeed: React.FC<LiveFeedProps> = ({
         src={imgSrc}
         alt={title}
         onError={handleImageError}
-        onLoad={handleImageLoad}
         style={{
           maxHeight: "400px",
           borderRadius: 8,
           border: "1px solid #ddd",
           width: "100%",
-          objectFit: "contain",
+          objectFit: "fill",
         }}
       />
     </Paper>

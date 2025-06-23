@@ -1,6 +1,5 @@
 import React from 'react';
 import {
-  Box,
   Divider,
   Drawer,
   IconButton,
@@ -9,12 +8,12 @@ import {
   ListItemButton,
   ListItemIcon,
   ListItemText,
-  Toolbar,
-  Typography,
+  Toolbar
 } from '@mui/material';
+import { NavLink } from 'react-router-dom';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import InboxIcon from '@mui/icons-material/MoveToInbox';
-import MailIcon from '@mui/icons-material/Mail';
+import CollectionsIcon from '@mui/icons-material/Collections';
 
 interface SideBarNavigationProps {
   open: boolean;
@@ -47,18 +46,27 @@ const SideBarNavigation: React.FC<SideBarNavigationProps> = ({
         </IconButton>
       </Toolbar>
       <Divider />
+      
       <List>
-        {['Dashboard', 'Event Gallery'].map((text, index) => (
-          <ListItem key={text} disablePadding>
-            <ListItemButton>
-              <ListItemIcon>
-                {index % 2 === 0 ? <InboxIcon /> : <MailIcon />}
-              </ListItemIcon>
-              <ListItemText primary={text} />
-            </ListItemButton>
-          </ListItem>
-        ))}
+        <ListItem disablePadding>
+          <ListItemButton component={NavLink} to="/" onClick={onClose}>
+            <ListItemIcon>
+              <InboxIcon />
+            </ListItemIcon>
+            <ListItemText primary="Dashboard" />
+          </ListItemButton>
+        </ListItem>
+
+        <ListItem disablePadding>
+          <ListItemButton component={NavLink} to="/event-gallery" onClick={onClose}>
+            <ListItemIcon>
+              <CollectionsIcon />
+            </ListItemIcon>
+            <ListItemText primary="Event Gallery" />
+          </ListItemButton>
+        </ListItem>
       </List>
+
     </Drawer>
   );
 };

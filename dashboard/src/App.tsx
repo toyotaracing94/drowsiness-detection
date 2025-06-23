@@ -3,6 +3,7 @@ import { Box, Toolbar } from "@mui/material";
 import AppHeader from "./components/AppHeader";
 import SideBarNavigation from "./components/SideBarNavigation";
 import DashboardPage from "./pages/DashboardPage";
+import { Route, Routes } from "react-router-dom";
 
 const drawerWidth = 240;
 
@@ -37,7 +38,9 @@ const App: React.FC = () => {
             }}
           >
           <Toolbar />
-          <DashboardPage/>
+          <Routes>
+            <Route path="/" element={<DashboardPage />} />
+          </Routes>
         </Box>
         
       </Box>
