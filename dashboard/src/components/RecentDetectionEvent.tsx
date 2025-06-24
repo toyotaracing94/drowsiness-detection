@@ -10,6 +10,7 @@ import {
   Chip,
   Box,
 } from "@mui/material";
+import { API_URL_LOCATION, HOST, PORT } from "../constant/urlConstant";
 
 interface DrowsinessEvent {
   timestamp: string;
@@ -25,7 +26,7 @@ const RecentDetectionEvent: React.FC = () => {
   const [logs, setLogs] = useState<DrowsinessEvent[]>([]);
 
   useEffect(() => {
-    const ws = new WebSocket("ws://localhost:8000/realtime/notification/drowsiness");
+    const ws = new WebSocket(`ws://${HOST}:${PORT}/realtime/notification/drowsiness`);
 
     ws.onopen = () => {
       console.log("WebSocket connected");
@@ -34,7 +35,7 @@ const RecentDetectionEvent: React.FC = () => {
     ws.onmessage = async (event) => {
       const eventId = JSON.parse(event.data);
       try {
-        const res = await fetch(`http://localhost:8000/drowsinessevent/${eventId}`);
+        const res = await fetch(`${API_URL_LOCATION}/drowsinessevent/${eventId}`);
         if (!res.ok) {
           console.error("Failed to fetch event data", res.statusText);
           return;

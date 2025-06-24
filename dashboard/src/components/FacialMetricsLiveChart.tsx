@@ -11,6 +11,7 @@ import {
   Tooltip
 } from "chart.js";
 import type { ChartOptions } from "chart.js"; 
+import { HOST, PORT } from "../constant/urlConstant";
 
 // Register ChartJS components
 ChartJS.register(LineElement, CategoryScale, LinearScale, PointElement, Legend, Tooltip);
@@ -32,7 +33,8 @@ const FacialMetricsChart: React.FC = () => {
   const ws = useRef<WebSocket | null>(null);
 
   useEffect(() => {
-    ws.current = new WebSocket("ws://localhost:8000/realtime/data/facialmetrics");
+    ws.current = new WebSocket(`ws://${HOST}:${PORT}/realtime/data/facialmetrics`);
+
 
     ws.current.onopen = () => {
       console.log("WebSocket connected");

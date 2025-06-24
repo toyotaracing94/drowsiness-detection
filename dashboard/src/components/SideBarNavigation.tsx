@@ -51,7 +51,7 @@ const SideBarNavigation: React.FC<SideBarNavigationProps> = ({
     >
       <Toolbar>
         <IconButton onClick={onClose}>
-          <ChevronLeftIcon />
+          <ChevronLeftIcon sx={{ fontSize: 38 }}/>
         </IconButton>
       </Toolbar>
       <Divider />

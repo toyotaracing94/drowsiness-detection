@@ -5,6 +5,7 @@ import ModelConfiguration from "../components/ModelConfiguration";
 import LiveFeed from "../components/LiveFeed";
 import FacialMetricsChart from "../components/FacialMetricsLiveChart";
 import RecentDetectionEvent from "../components/RecentDetectionEvent";
+import { API_URL_LOCATION } from "../constant/urlConstant";
 
 const DashboardPage : React.FC = () => {
     return (
@@ -21,14 +22,14 @@ const DashboardPage : React.FC = () => {
                 <Grid container spacing={2}>
                     <Grid size={{ xs: 12, md: 6 }}>
                         <LiveFeed
-                            src="http://localhost:8000/realtime/video/raw"
+                            src={`${API_URL_LOCATION}/realtime/video/raw`}
                             title="Live Camera"
                         />
                     </Grid>
                     
                     <Grid size={{ xs: 12, md: 6 }}>
                         <LiveFeed
-                            src="http://localhost:8000/realtime/video/processed"
+                            src={`${API_URL_LOCATION}/realtime/video/processed`}
                             title="Live Detection"
                         />
                     </Grid>
