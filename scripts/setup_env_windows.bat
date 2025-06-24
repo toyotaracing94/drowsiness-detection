@@ -52,6 +52,41 @@ pip list
 echo.
 echo [SUCCESS] Virtual environment setup complete!
 echo [INFO] To deactivate the environment, type: deactivate
+
+REM === Step 2: React Frontend Setup ===
+
+REM === Node.js Setup Check ===
+node -v >nul 2>&1
+if %errorlevel% neq 0 (
+    echo [ERROR] Node.js is not installed or not added to PATH.
+    echo [INFO] Please install Node.js first from https://nodejs.org/en/download and rerun this script.
+    g
+)
+
+echo [INFO] Setting up React dashboard...
+
+cd dashboard
+if exist package.json (
+    echo [INFO] Installing frontend dependencies...
+    npm install
+
+    echo [INFO] Building React dashboard...
+    npm run build
+
+    echo [INFO] Optionally install static server...
+    npm install -g serve
+) else (
+    echo [ERROR] React dashboard 'package.json' not found. Skipping frontend setup.
+)
+
+cd ..
+
+REM === Done ===
+echo.
+echo [SUCCESS] Setup complete!
+echo [INFO] To run backend: venv\Scripts\activate && uvicorn main:app --host 0.0.0.0 --port 8000
+echo [INFO] To serve frontend: cd dashboard && npx serve -s dist -l 3000
+
 deactivate
 
 :end

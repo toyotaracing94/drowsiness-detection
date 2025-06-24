@@ -36,7 +36,7 @@ else
     python3 -m venv --system-site-packages "$VENV_DIR"
 fi
 
-# Step 5: Install Node.js 
+# Step 5: Install Node.js, install the package, and build the frontend
 if ! command -v node >/dev/null 2>&1; then
     echo "[INFO] Installing Node.js via NVM..."
     # Download and install nvm:
@@ -59,6 +59,20 @@ npm -v
 
 # Install serve to serve React dashboard for now
 npm install -g serve
+
+# Build and serve the React frontend
+echo "[INFO] Setting up React dashboard..."
+
+cd dashboard || {
+    echo "[ERROR] 'dashboard' directory not found!"
+    exit 1
+}
+
+echo "[INFO] Installing frontend dependencies..."
+npm install
+
+echo "[INFO] Building React frontend..."
+npm run build
 
 # Step 6: Activate virtual environment
 echo "[INFO] Activating virtual environment..."
