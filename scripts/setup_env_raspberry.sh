@@ -36,7 +36,27 @@ else
     python3 -m venv --system-site-packages "$VENV_DIR"
 fi
 
-# Step 5: Install Node.js, install the package, and build the frontend
+# Step 5: Activate virtual environment
+echo "[INFO] Activating virtual environment..."
+source "$VENV_DIR/bin/activate"
+
+# Step 6: Upgrade pip (optional but recommended)
+echo "[INFO] Upgrading pip..."
+pip install --upgrade pip
+
+# Step 7: Install project dependencies
+if [ -f "$REQUIREMENTS_FILE" ]; then
+    echo "[INFO] Installing dependencies from $REQUIREMENTS_FILE..."
+    pip install -r "$REQUIREMENTS_FILE"
+else
+    echo "[WARNING] $REQUIREMENTS_FILE not found. Skipping."
+fi
+
+# Step 8: Install uvicorn for FastAPI
+echo "[INFO] Installing uvicorn server..."
+pip install "uvicorn[standard]"
+
+# Step 9: Install Node.js, install the package, and build the frontend
 if ! command -v node >/dev/null 2>&1; then
     echo "[INFO] Installing Node.js system-wide via NodeSource..."
     curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
@@ -68,28 +88,13 @@ npm install
 echo "[INFO] Building React frontend..."
 npm run build
 
-# Step 6: Activate virtual environment
-echo "[INFO] Activating virtual environment..."
-source "$VENV_DIR/bin/activate"
-
-# Step 7: Upgrade pip (optional but recommended)
-echo "[INFO] Upgrading pip..."
-pip install --upgrade pip
-
-# Step 8: Install project dependencies
-if [ -f "$REQUIREMENTS_FILE" ]; then
-    echo "[INFO] Installing dependencies from $REQUIREMENTS_FILE..."
-    pip install -r "$REQUIREMENTS_FILE"
-else
-    echo "[WARNING] $REQUIREMENTS_FILE not found. Skipping."
-fi
-
-# Step 9: Install uvicorn for FastAPI
-echo "[INFO] Installing uvicorn server..."
-pip install "uvicorn[standard]"
 
 echo
 echo "[SUCCESS] Environment setup complete!"
 echo "[INFO] To activate the environment later, run:"
 echo "       source $VENV_DIR/bin/activate"
+echo "       uvicorn main:app
 echo "[INFO] To deactivate the environment, run: deactivate"
+
+echo "[INFO] To activate the React Dashboard later, run:"
+echo "       npm run dev"
