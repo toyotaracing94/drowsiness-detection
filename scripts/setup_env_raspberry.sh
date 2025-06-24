@@ -38,27 +38,21 @@ fi
 
 # Step 5: Install Node.js, install the package, and build the frontend
 if ! command -v node >/dev/null 2>&1; then
-    echo "[INFO] Installing Node.js via NVM..."
-    # Download and install nvm:
-    curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash
-
-    # Initialize nvm without restarting shell
-    export NVM_DIR="$HOME/.nvm"
-    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-
-    # Install Node.js
-    nvm install 22
+    echo "[INFO] Installing Node.js system-wide via NodeSource..."
+    curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
+    sudo apt install -y nodejs
+    sudo npm install -g npm
 else
     echo "[INFO] Node.js already installed. Skipping."
+    sudo npm install -g npm
 fi
 
 # Verify the Node.js version:
-nvm current
 node -v
 npm -v
 
-# Install serve to serve React dashboard for now
-npm install -g serve
+# Update npm and Install serve to serve React dashboard for now
+sudo npm install -g serve
 
 # Build and serve the React frontend
 echo "[INFO] Setting up React dashboard..."
