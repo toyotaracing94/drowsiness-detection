@@ -39,7 +39,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({ drawerOpen, onDrawerToggle, drawe
           <Box display="flex" alignItems="center">
             <Box
               component="img"
-              src="src/assets/logo_drivesafepi.png"
+              src="/logo_drivesafepi.png"
               sx={{ width: 65, mr: 2 }}
             />
             <Box>

@@ -11,7 +11,7 @@ interface LiveFeedProps {
 const LiveFeed: React.FC<LiveFeedProps> = ({
   src,
   title = "Live Camera Feed",
-  fallbackSrc = "src/assets/no-image-available.jpg",
+  fallbackSrc = "/no-image-available.jpg",
   checkIntervalMs = 5000,
 }) => {
   const [imgSrc, setImgSrc] = useState(src);
@@ -21,11 +21,6 @@ const LiveFeed: React.FC<LiveFeedProps> = ({
   const handleImageError = () => {
     setHasError(true);
     setImgSrc(fallbackSrc);
-  };
-
-  // Function to handle successful image load
-  const handleImageLoad = () => {
-    setHasError(false);
   };
 
   useEffect(() => {
