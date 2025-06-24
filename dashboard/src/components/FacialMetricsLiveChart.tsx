@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Paper, Typography } from "@mui/material";
+import { Box, Paper, Typography } from "@mui/material";
 import { Line } from "react-chartjs-2";
 import {
   Chart as ChartJS,
@@ -99,20 +99,61 @@ const FacialMetricsChart: React.FC = () => {
   // Explicitly type options and use `animation: false` as literal
   const chartOptions: ChartOptions<"line"> = {
     responsive: true,
+    maintainAspectRatio: false,
     animation: false,
+    layout: {
+      padding: {
+        top: 10,
+        bottom: 10,
+        left: 15,
+        right: 15,
+      },
+    },
+    plugins: {
+      legend: {
+        position: 'top',
+        labels: {
+          usePointStyle: true,
+          pointStyle: 'circle',
+          boxWidth: 10,
+          font: {
+            size: 12,
+          },
+          padding: 15,
+        },
+      },
+      tooltip: {
+        mode: 'index',
+        intersect: false,
+      },
+    },
     scales: {
+      x: {
+        ticks: {
+          maxRotation: 45,
+          minRotation: 0,
+          autoSkip: true,
+          maxTicksLimit: 10,
+        },
+      },
       y: {
         beginAtZero: true,
+        suggestedMax: 1,
+        ticks: {
+          stepSize: 0.1,
+        },
       },
     },
   };
 
   return (
     <Paper variant="outlined" sx={{ p: 2 }}>
-      <Typography variant="h6" gutterBottom>
-        EAR / MAR Graph
+      <Typography variant="h2" gutterBottom>
+        Facial Metrics Graph
       </Typography>
-      <Line data={chartData} options={chartOptions} />
+      <Box sx={{ flexGrow: 1 , width : '100%', height: '30vh'}}>
+          <Line data={chartData} options={chartOptions} />
+      </Box>
     </Paper>
   );
 };

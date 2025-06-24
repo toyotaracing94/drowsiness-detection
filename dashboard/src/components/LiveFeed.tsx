@@ -53,7 +53,7 @@ const LiveFeed: React.FC<LiveFeedProps> = ({
 
   return (
     <Paper variant="outlined" sx={{ p: 2, mb: 2 }}>
-      <Typography variant="h6" gutterBottom>
+      <Typography variant="h2" gutterBottom>
         {title}
       </Typography>
 

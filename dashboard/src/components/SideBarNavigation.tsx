@@ -8,7 +8,9 @@ import {
   ListItemButton,
   ListItemIcon,
   ListItemText,
-  Toolbar
+  Toolbar,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material';
 import { NavLink } from 'react-router-dom';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
@@ -26,13 +28,20 @@ const SideBarNavigation: React.FC<SideBarNavigationProps> = ({
   onClose,
   drawerWidth,
 }) => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+
   return (
     <Drawer
-      variant="persistent"
+      variant={isMobile ? 'temporary' : 'persistent'}
       anchor="left"
       open={open}
+      onClose={isMobile ? onClose : undefined}
+      ModalProps={{
+        keepMounted: true,
+      }}
       sx={{
-        width: drawerWidth,
+        width: 0,
         flexShrink: 0,
         '& .MuiDrawer-paper': {
           width: drawerWidth,
@@ -46,7 +55,7 @@ const SideBarNavigation: React.FC<SideBarNavigationProps> = ({
         </IconButton>
       </Toolbar>
       <Divider />
-      
+
       <List>
         <ListItem disablePadding>
           <ListItemButton component={NavLink} to="/" onClick={onClose}>
@@ -66,7 +75,6 @@ const SideBarNavigation: React.FC<SideBarNavigationProps> = ({
           </ListItemButton>
         </ListItem>
       </List>
-
     </Drawer>
   );
 };

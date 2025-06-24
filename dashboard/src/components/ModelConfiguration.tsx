@@ -16,7 +16,7 @@ const ModelConfiguration: React.FC = () => {
 
   return (
     <Paper variant="outlined" sx={{ p: 2 }}>
-      <Typography variant="h6" gutterBottom>
+      <Typography variant="h2" gutterBottom>
         Model Configuration
       </Typography>
 
@@ -38,7 +38,6 @@ const ModelConfiguration: React.FC = () => {
         margin="normal"
         value={maxPerson}
         onChange={(e) => setMaxPerson(Number(e.target.value))}
-        inputProps={{ min: 1 }}
       />
 
       <FormControl fullWidth margin="normal">

@@ -66,14 +66,14 @@ const RecentDetectionEvent: React.FC = () => {
 
   return (
     <Paper variant="outlined" sx={{ p: 2 }}>
-      <Typography variant="h6" gutterBottom>
+      <Typography variant="h2" fontWeight={600} gutterBottom>
         Detection Log
       </Typography>
 
       <List dense>
         {logs.map((log, index) => (
-          <React.Fragment key={log.id}>
-            <ListItem alignItems="flex-start">
+          <Box key={log.id}>
+            <ListItem>
               <Avatar
                 variant="rounded"
                 src={log.image}
@@ -82,36 +82,39 @@ const RecentDetectionEvent: React.FC = () => {
               />
               <ListItemText
                 primary={
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <Box sx={{display: "flex", flexWrap: "wrap", gap: 1 }}>
                     <Chip
                       label={log.event_type}
-                      color={log.event_type.toLowerCase().includes("drowsy") ? "error" : "warning"}
+                      color="warning"
                       size="small"
                     />
-                    <Typography variant="body2" color="text.secondary">
-                      {new Date(log.timestamp).toLocaleTimeString()}
+                    <Typography variant="body2">
+                      {new Date(log.timestamp).toLocaleString(undefined, {
+                        dateStyle: "medium",
+                        timeStyle: "medium",
+                      })}
                     </Typography>
                   </Box>
                 }
                 secondary={
                   <>
-                    <Typography variant="body2" color="text.primary" component="span">
-                      Vehicle: {log.vehicle_identification}
+                    <Typography variant="body2" component="span" sx={{ fontStyle: 'italic' }}>
+                      <strong>Event ID:</strong> {log.id}
                     </Typography>
                     <br />
-                    <Typography variant="body2" color="text.secondary" component="span" sx={{ fontStyle: 'italic' }}>
-                      Event ID: {log.id}
+                    <Typography variant="body2" component="span">
+                      <strong>Vehicle:</strong> {log.vehicle_identification}
                     </Typography>
                     <br />
-                    <Typography variant="caption" color="text.secondary" component="span">
-                      EAR: {log.ear.toFixed(2)} | MAR: {log.mar.toFixed(2)}
+                    <Typography variant="caption" component="span">
+                      <strong>EAR:</strong> {log.ear.toFixed(2)} | <strong>MAR:</strong> {log.mar.toFixed(2)}
                     </Typography>
                   </>
                 }
               />
             </ListItem>
             {index < logs.length - 1 && <Divider variant="inset" component="li" />}
-          </React.Fragment>
+          </Box>
         ))}
       </List>
     </Paper>
