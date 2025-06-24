@@ -36,15 +36,39 @@ else
     python3 -m venv --system-site-packages "$VENV_DIR"
 fi
 
-# Step 5: Activate virtual environment
+# Step 5: Install Node.js 
+if ! command -v node >/dev/null 2>&1; then
+    echo "[INFO] Installing Node.js via NVM..."
+    # Download and install nvm:
+    curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash
+
+    # Initialize nvm without restarting shell
+    export NVM_DIR="$HOME/.nvm"
+    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+
+    # Install Node.js
+    nvm install 22
+else
+    echo "[INFO] Node.js already installed. Skipping."
+fi
+
+# Verify the Node.js version:
+nvm current
+node -v
+npm -v
+
+# Install serve to serve React dashboard for now
+npm install -g serve
+
+# Step 6: Activate virtual environment
 echo "[INFO] Activating virtual environment..."
 source "$VENV_DIR/bin/activate"
 
-# Step 6: Upgrade pip (optional but recommended)
+# Step 7: Upgrade pip (optional but recommended)
 echo "[INFO] Upgrading pip..."
 pip install --upgrade pip
 
-# Step 7: Install project dependencies
+# Step 8: Install project dependencies
 if [ -f "$REQUIREMENTS_FILE" ]; then
     echo "[INFO] Installing dependencies from $REQUIREMENTS_FILE..."
     pip install -r "$REQUIREMENTS_FILE"
@@ -52,7 +76,7 @@ else
     echo "[WARNING] $REQUIREMENTS_FILE not found. Skipping."
 fi
 
-# Step 8: Install uvicorn for FastAPI
+# Step 9: Install uvicorn for FastAPI
 echo "[INFO] Installing uvicorn server..."
 pip install "uvicorn[standard]"
 
