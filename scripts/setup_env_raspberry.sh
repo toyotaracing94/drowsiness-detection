@@ -83,10 +83,10 @@ cd dashboard || {
 }
 
 echo "[INFO] Installing frontend dependencies..."
-npm install
+sudo npm install
 
 echo "[INFO] Building React frontend..."
-npm run build
+sudo npm run build
 
 
 echo
