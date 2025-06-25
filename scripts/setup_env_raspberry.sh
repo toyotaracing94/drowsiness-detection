@@ -93,7 +93,7 @@ echo
 echo "[SUCCESS] Environment setup complete!"
 echo "[INFO] To activate the environment later, run:"
 echo "       source $VENV_DIR/bin/activate"
-echo "       uvicorn main:app
+echo "       uvicorn main:app"
 echo "[INFO] To deactivate the environment, run: deactivate"
 
 echo "[INFO] To activate the React Dashboard later, run:"
