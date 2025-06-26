@@ -9,8 +9,8 @@ import { API_URL_LOCATION } from "../constant/urlConstant";
 
 const DashboardPage : React.FC = () => {
     return (
-        <Grid container spacing={2}>
-            <Grid size={{ xs: 12, md: 3 }}>
+        <Grid container spacing={2} margin={2}>
+            <Grid size={{ xs: 12, lg : 3 }}>
                 <Grid>
                     <SystemConfiguration/>
                 </Grid>
@@ -18,7 +18,7 @@ const DashboardPage : React.FC = () => {
                     <ModelConfiguration/>
                 </Grid>
             </Grid>
-            <Grid size={{ xs: 12, md: 9 }}>
+            <Grid size={{ xs: 12, lg: 9 }}>
                 <Grid container spacing={2}>
                     <Grid size={{ xs: 12, md: 6 }}>
                         <LiveFeed

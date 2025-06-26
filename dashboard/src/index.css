@@ -2,3 +2,7 @@ body {
     margin: 0;
     padding: 0;
 }
+
+.ps-active {
+  color: #1976d2 !important;
+}
