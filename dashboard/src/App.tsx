@@ -1,11 +1,11 @@
-  import React, { useState } from "react";
-  import { ThemeProvider } from '@mui/material/styles';
-  import { Box, CssBaseline } from "@mui/material";
-  import AppHeader from "./components/AppHeader";
-  import SideBarNavigation from "./components/SideBarNavigation";
-  import DashboardPage from "./pages/DashboardPage";
-  import { Route, Routes } from "react-router-dom";
-  import theme from "./config/theme";
+import React, { useState } from "react";
+import { ThemeProvider } from '@mui/material/styles';
+import { Box, CssBaseline } from "@mui/material";
+import AppHeader from "./components/AppHeader";
+import SideBarNavigation from "./components/SideBarNavigation";
+import DashboardPage from "./pages/DashboardPage";
+import { Route, Routes } from "react-router-dom";
+import theme from "./config/theme";
 import NotFoundPage from "./pages/NotFoundPage";
 import EventGalleryPage from "./pages/EventGalleryPage";
 
