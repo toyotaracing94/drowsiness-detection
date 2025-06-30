@@ -1,10 +1,13 @@
 from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.responses import FileResponse
 
+from src.domain.dto.base_response import StandardResponse
 from src.domain.entity.drowsiness_event import DrowsinessEvent
 from src.services.dependencies import get_drowsiness_event_service
 from src.services.drowsiness_event_service import DrowsinessEventService
+from src.utils.logging import logging_default
 
 router = APIRouter()
 
@@ -42,7 +45,29 @@ def get_event(event_id: str, service: DrowsinessEventService = Depends(get_drows
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"An error occurred while fetching the event: {str(e)}"
         )
-    
+
+@router.get(
+    "/download/{event_id}",
+    description="Download the drowsiness event by Event ID",
+    response_model=StandardResponse
+)
+async def download_image_event(event_id : str, service: DrowsinessEventService = Depends(get_drowsiness_event_service)):
+    try:
+        file_path, content_type, file_name = service.download_event_image(event_id)
+        headers = {'Access-Control-Expose-Headers': 'Content-Disposition'}
+
+        return FileResponse(
+            path=file_path,
+            media_type=content_type,
+            filename=file_name,
+            headers=headers
+        )
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"An error occurred while fetching the event: {str(e)}"
+        )
 
 @router.post(
     "/",
