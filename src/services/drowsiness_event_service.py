@@ -1,4 +1,5 @@
 import datetime
+import os
 from typing import List
 from uuid import UUID
 
@@ -72,6 +73,35 @@ class DrowsinessEventService:
             return event
         except Exception as e:
             logging_default.error(f"Error while fetching DrowsinessEvent with ID {event_id}: {str(e)}")
+            raise
+    
+    def download_event_image(self, event_id: str) -> tuple[str, str, str]:
+        """
+        Retrieves the path and metadata of the image for the given event.
+
+        Args:
+            event_id (str): The ID of the event.
+
+        Returns:
+            tuple: (file_path, content_type, file_name)
+        """
+        try:
+            logging_default.info(f"Download image for DrowsinessEvent ID: {event_id}")
+            event = self.get_event_by_id(event_id)
+            if not event or not event.image:
+                logging_default.warning(f"No DrowsinessEvent found with ID: {event_id}")
+                raise FileNotFoundError("Image not found for the event.")
+
+            file_path = event.image
+            if not os.path.exists(file_path):
+                raise FileNotFoundError(f"Image file does not exist at path: {file_path}")
+
+            content_type = "image/png"
+            file_name = f"{event.id}_{event.event_type}_ear_{event.ear:.2f}_mar_{event.mar:.2f}.png"
+            return file_path, content_type, file_name
+
+        except Exception as e:
+            logging_default.error(f"Error while downloading image for event {event_id}: {str(e)}")
             raise
 
     def get_all_events(self) -> List[DrowsinessEvent]:

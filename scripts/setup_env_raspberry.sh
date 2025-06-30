@@ -56,8 +56,45 @@ fi
 echo "[INFO] Installing uvicorn server..."
 pip install "uvicorn[standard]"
 
+# Step 9: Install Node.js, install the package, and build the frontend
+if ! command -v node >/dev/null 2>&1; then
+    echo "[INFO] Installing Node.js system-wide via NodeSource..."
+    curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
+    sudo apt install -y nodejs
+    sudo npm install -g npm
+else
+    echo "[INFO] Node.js already installed. Skipping."
+    sudo npm install -g npm
+fi
+
+# Verify the Node.js version:
+node -v
+npm -v
+
+# Update npm and Install serve to serve React dashboard for now
+sudo npm install -g serve
+
+# Build and serve the React frontend
+echo "[INFO] Setting up React dashboard..."
+
+cd dashboard || {
+    echo "[ERROR] 'dashboard' directory not found!"
+    exit 1
+}
+
+echo "[INFO] Installing frontend dependencies..."
+sudo npm install
+
+echo "[INFO] Building React frontend..."
+sudo npm run build
+
+
 echo
 echo "[SUCCESS] Environment setup complete!"
 echo "[INFO] To activate the environment later, run:"
 echo "       source $VENV_DIR/bin/activate"
+echo "       uvicorn main:app"
 echo "[INFO] To deactivate the environment, run: deactivate"
+
+echo "[INFO] To activate the React Dashboard later, run:"
+echo "       npm run dev"

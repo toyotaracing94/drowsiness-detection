@@ -80,8 +80,10 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
     allow_methods=["*"],
-    allow_headers=["*"],
+    allow_headers=["*"]
 )
+
+# Serve static files for the image drowsiness event
 os.makedirs(settings.ApiSettings.static_dir, exist_ok=True)
 app.mount(f"/{settings.ApiSettings.static_dir}", StaticFiles(directory=f"{settings.ApiSettings.static_dir}"), name="static")
 

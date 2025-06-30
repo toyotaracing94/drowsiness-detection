@@ -1,0 +1,14 @@
+[Unit]
+Description=Drowsiness Detection React Frontend
+After=network.target
+
+[Service]
+User=root
+Group=root
+WorkingDirectory=/opt/drowsiness-detection/dashboard
+ExecStart=/home/pi/.nvm/versions/node/v22.16.0/bin/serve -s dist -l 3000
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
