@@ -5,23 +5,22 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from sqlmodel import Session
-from src.infrastructure.migrate import run_migrations
-from src.services.drowsiness_event_service import DrowsinessEventService
-from src.settings.app_config import settings
-from src.settings.model_config import model_settings
-from src.infrastructure.session import init_db, engine
+from backend.infrastructure.migrate import run_migrations
+from backend.services.drowsiness_event_service import DrowsinessEventService
+from backend.settings.app_config import settings
+from backend.infrastructure.session import init_db, engine
 
-from src.lib.socket_trigger import SocketTrigger
-from src.routers import drowsiness_realtime_router, app_version, buzzer_router, drowsiness_event_router
-from src.services.drowsiness_detection_service import DrowsinessDetectionService
-from src.services.phone_detection_service import PhoneDetectionService
-from src.services.hand_detection_service import HandsDetectionService
+from backend.lib.socket_trigger import SocketTrigger
+from backend.routers import drowsiness_realtime_router, app_version, buzzer_router, drowsiness_event_router
+from backend.services.drowsiness_detection_service import DrowsinessDetectionService
+from backend.services.phone_detection_service import PhoneDetectionService
+from backend.services.hand_detection_service import HandsDetectionService
 
-from src.tasks.detection_task import DetectionTask
-from src.utils.frame_buffer import FrameBuffer
-from src.utils.logging import logging_default
+from backend.tasks.detection_task import DetectionTask
+from backend.utils.frame_buffer import FrameBuffer
+from backend.utils.logging import logging_default
 
-from src.hardware.factory_hardware import (
+from backend.hardware.factory_hardware import (
     get_camera,
     get_buzzer
 )

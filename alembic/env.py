@@ -15,8 +15,8 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 # Import SQLModel metadata and your database engine
 from sqlmodel import SQLModel
-from src.infrastructure.session import engine
-from src.domain.entity.drowsiness_event import DrowsinessEvent
+from backend.infrastructure.session import engine
+from backend.domain.entity.drowsiness_event import DrowsinessEvent
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
