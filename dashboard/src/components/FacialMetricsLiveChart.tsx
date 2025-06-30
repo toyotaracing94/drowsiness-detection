@@ -42,12 +42,11 @@ const FacialMetricsChart: React.FC = () => {
 
     ws.current.onmessage = (event) => {
       try {
-        const parsed = JSON.parse(event.data);
-        const anotherParsed : FacialMetrics = JSON.parse(parsed)
+        const parsed : FacialMetrics = JSON.parse(event.data);
 
         const newPoint = {
-          ear: anotherParsed.ear,
-          mar: anotherParsed.mar,
+          ear: parsed.ear,
+          mar: parsed.mar,
           timestamp: new Date().toLocaleTimeString(),
         };
 

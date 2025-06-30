@@ -19,11 +19,13 @@ import EventGalleryPage from "./pages/EventGalleryPage";
           <AppHeader collapsed={drawerOpen} setCollapsed={setDrawerOpen}/>
           <Box component="main" sx={{display: 'flex', gap: 2}}>
             <SideBarNavigation collapsed={drawerOpen}/>
-            <Routes>
-              <Route path="/" element={<DashboardPage />} />
-              <Route path="/gallery" element={<EventGalleryPage />} />
-              <Route path="*" element={<NotFoundPage />} />
-            </Routes>
+            <Box sx={{ flexGrow: 1, overflow: 'auto' }}>
+              <Routes>
+                <Route path="/" element={<DashboardPage />} />
+                <Route path="/gallery" element={<EventGalleryPage />} />
+                <Route path="*" element={<NotFoundPage />} />
+              </Routes>
+            </Box>
           </Box>
         </Box>
       </ThemeProvider>

@@ -59,7 +59,7 @@ def drowsiness_realtime_router(frame_buffer : FrameBuffer):
 
                 if facial_metrics:
                     # Send the facial metrics as JSON if available
-                    await websocket.send_json(facial_metrics.model_dump_json())
+                    await websocket.send_json(facial_metrics.model_dump())
                 else:
                     # Default values if no metrics are available
                     await websocket.send_json({"ear": 0.0, "mar": 0.0, "is_drowsy" : False, "is_calling" : "false"})
