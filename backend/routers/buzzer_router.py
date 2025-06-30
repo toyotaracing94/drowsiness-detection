@@ -2,11 +2,29 @@ from fastapi import APIRouter, HTTPException
 
 from backend.domain.dto.base_response import StandardResponse
 from backend.domain.dto.buzzer_dto import BeepRequest
-from backend.hardware.buzzer.base_buzzer import BaseBuzzer
+from backend.services.buzzer_service import BuzzerService
 
 
-def buzzer_router(buzzer: BaseBuzzer):
+def buzzer_router(buzzer_service: BuzzerService):
     router = APIRouter()
+
+    @router.get(
+        "/test", 
+        summary="Test a buzzer beep", 
+        response_model=StandardResponse,
+        description="""
+        Quick test to check whether the buzzer is actually functional or not 
+        """
+    )
+    async def trigger_beep_test():
+        try:
+            buzzer_service.test_buzzer()
+            return StandardResponse(
+                status="success",
+                message="Beeped"
+            )
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Buzzer failed: {str(e)}")
 
     @router.post(
         "/beep", 
@@ -17,9 +35,9 @@ def buzzer_router(buzzer: BaseBuzzer):
         duration, frequency, and pause interval between beeps.
         """
     )
-    def trigger_beep(req: BeepRequest):
+    async def trigger_beep(req: BeepRequest):
         try:
-            buzzer.beep(req.times, req.duration, req.pause, req.frequency)
+            buzzer_service.beep_buzzer(req.times, req.duration, req.pause, req.frequency)
             return StandardResponse(
                 status="success",
                 message=f"Beeped {req.times} time(s)."

@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from sqlmodel import Session
 from backend.infrastructure.migrate import run_migrations
+from backend.services.buzzer_service import BuzzerService
 from backend.services.drowsiness_event_service import DrowsinessEventService
 from backend.settings.app_config import settings
 from backend.infrastructure.session import init_db, engine
@@ -38,7 +39,8 @@ run_migrations()
 db_session = Session(engine)
 drowsiness_event_service = DrowsinessEventService(db_session)
 
-drowsiness_service = DrowsinessDetectionService(buzzer, socket_trigger, drowsiness_event_service)
+buzzer_service = BuzzerService(buzzer)
+drowsiness_service = DrowsinessDetectionService(buzzer_service, socket_trigger, drowsiness_event_service)
 phone_detection_service = PhoneDetectionService(socket_trigger)
 hand_service = HandsDetectionService(socket_trigger)
 
@@ -89,6 +91,6 @@ app.mount(f"/{settings.ApiSettings.static_dir}", StaticFiles(directory=f"{settin
 # Register router
 logging_default.info("Registering API routers")
 app.include_router(app_version.router, prefix="/version", tags=["Version"])
-app.include_router(buzzer_router.buzzer_router(buzzer), prefix="/buzzer", tags=["Buzzer"])
+app.include_router(buzzer_router.buzzer_router(buzzer_service), prefix="/buzzer", tags=["Buzzer"])
 app.include_router(drowsiness_realtime_router.drowsiness_realtime_router(frame_buffer), prefix="/realtime", tags=["Realtime Drowsiness"])
 app.include_router(drowsiness_event_router.router, prefix="/drowsinessevent", tags=["Drowsiness Event"])

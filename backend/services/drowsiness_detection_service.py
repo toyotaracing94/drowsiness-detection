@@ -1,5 +1,4 @@
 import datetime
-import threading
 import time
 
 import cv2
@@ -8,9 +7,9 @@ from uuid6 import uuid7
 
 from backend.domain.dto.drowsiness_detection_result import DrowsinessDetectionResult
 from backend.domain.entity.drowsiness_event import DrowsinessEvent
-from backend.hardware.buzzer.base_buzzer import BaseBuzzer
 from backend.lib.drowsiness_detection import DrowsinessDetection
 from backend.lib.socket_trigger import SocketTrigger
+from backend.services.buzzer_service import BuzzerService
 from backend.services.drowsiness_event_service import DrowsinessEventService
 from backend.settings.app_config import settings
 from backend.settings.detection_config import detection_settings
@@ -32,10 +31,10 @@ from backend.utils.logging import logging_default
 
 
 class DrowsinessDetectionService:
-    def __init__(self, buzzer : BaseBuzzer, socket_trigger : SocketTrigger, drowsiness_event_service: DrowsinessEventService):
+    def __init__(self, buzzer_service : BuzzerService, socket_trigger : SocketTrigger, drowsiness_event_service: DrowsinessEventService):
         logging_default.info("Initiated Drowsiness Services")
 
-        self.buzzer = buzzer
+        self.buzzer_service = buzzer_service
         self.socket_trigger = socket_trigger
         self.drowsiness_detector = DrowsinessDetection(model_settings.face, detection_settings.drowsiness ,inference_engine=settings.PipelineSettings.inference_engine)
         self.drowsiness_event_service = drowsiness_event_service
@@ -43,67 +42,8 @@ class DrowsinessDetectionService:
         self.drowsiness_start_time = None
         self.yawning_start_time = None
 
-        self.buzzer_thread = None
-        self.buzzer_function = None
-        self.keep_beeping = False
-
         self.drowsiness_notification_flag_sent = False
         self.yawning_notification_flag_sent = False
-
-    def start_buzzer(self, buzzer_function : callable):
-        """
-        This function starts the buzzer function in a new thread, allowing the buzzer
-        to run concurrently with the rest of the application without blocking the main thread.
-        
-        If there is already an active buzzer thread running, it will check if the 
-        requested buzzer function is different from the currently active function. 
-        If it is, the new function will replace the old one. Otherwise, the function will 
-        not restart the thread.
-
-        Parameters
-        ----------
-        buzzer_function : function
-            A function that handles the buzzer behavior (such as calling `beep()` 
-            or any other logic for controlling the buzzer). The function will be executed 
-            repeatedly in the background thread.
-
-        Notes
-        -----
-        - The buzzer function is expected to run continuously or in a loop until the
-          `stop_buzzer()` method is called.
-        - The `start_buzzer()` method prevents multiple threads from being created for
-          the same buzzer function. If a thread is already running with the same function,
-          it won't create a new thread.
-        """
-        if self.buzzer_thread and self.buzzer_thread.is_alive():
-            if self.buzzer_function != buzzer_function:
-                self.buzzer_function = buzzer_function
-            return
-
-        self.keep_beeping = True
-        self.buzzer_function = buzzer_function
-        self.buzzer_thread = threading.Thread(target=self.buzzer_loop, daemon=True)
-        self.buzzer_thread.start()
-
-    def stop_buzzer(self):
-        """
-        This function stops the buzzer function by setting the `keep_beeping` flag to `False`
-        and clearing the `buzzer_function` and `drowsiness_stage`. So the actuall function that
-        was running the "pseudo-function" of the beep can be putted down without clearing the Thread
-        """
-        self.keep_beeping = False
-        self.buzzer_function = None
-        self.drowsiness_stage = None
-        self.buzzer.cleanup()
-    
-    def buzzer_loop(self):
-        """
-        This is the background loop that continuously executes the `buzzer_function` 
-        while `keep_beeping` is `True` and a valid `buzzer_function` is set. The function
-        is run repeatedly until `stop_buzzer()` is called, which sets `keep_beeping` to `False`.
-        """
-        while self.keep_beeping and self.buzzer_function:
-            self.buzzer_function()
 
     def process_frame(self, frame : np.ndarray) -> DrowsinessDetectionResult:
         """
@@ -146,11 +86,11 @@ class DrowsinessDetectionService:
                 duration = time.time() - self.drowsiness_start_time
 
                 if 2 <= duration < 5:
-                    self.start_buzzer(self.buzzer.beep_first_stage)
+                    self.buzzer_service.start_buzzer(self.buzzer_service.buzzer.beep_first_stage)
                 elif 5 <= duration < 10:
-                    self.start_buzzer(self.buzzer.beep_second_stage)
+                    self.buzzer_service.start_buzzer(self.buzzer_service.buzzer.beep_second_stage)
                 elif duration >= 10:
-                    self.start_buzzer(self.buzzer.beep_third_stage)
+                    self.buzzer_service.start_buzzer(self.buzzer_service.buzzer.beep_third_stage)
 
                 if not self.drowsiness_notification_flag_sent:
                     image_uuid = uuid7()
@@ -174,7 +114,7 @@ class DrowsinessDetectionService:
 
                 self.drowsiness_start_time = None
                 self.drowsiness_notification_flag_sent = False
-                self.stop_buzzer()
+                self.buzzer_service.stop_buzzer()
 
             # Handle yawning logic
             if face_state.is_yawning:
