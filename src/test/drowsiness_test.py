@@ -3,6 +3,9 @@ import unittest
 import cv2
 
 from src.lib.drowsiness_detection import DrowsinessDetection
+from src.settings.app_config import settings
+from src.settings.model_config import model_settings
+from src.settings.detection_config import detection_settings
 from src.utils.landmark_constants import (
     LEFT_EYE_POINTS,
     OUTER_LIPS_POINTS,
@@ -15,13 +18,13 @@ class DrowsinessTest(unittest.TestCase):
         """
         Setup necessary instances and objects to be used across multiple tests.
         """
-        self.drowsiness_detector = DrowsinessDetection("config/drowsiness_detection_settings.json")
+        self.drowsiness_detector = DrowsinessDetection(model_settings.face, detection_settings.drowsiness ,inference_engine=settings.PipelineSettings.inference_engine)
 
     def test_drowsiness_with_closed_eyes(self):
         """
         Test if the system detects drowsiness when the eyes are closed.
         """
-        frame = cv2.imread("test/test_resources/drowsy_full_both_eye_closes.jpeg")
+        frame = cv2.imread("src/test/test_resources/drowsy_full_both_eye_closes.jpeg")
         # Detect face landmarks
         face_landmarks = self.drowsiness_detector.detect_face_landmarks(frame)
         
@@ -47,7 +50,7 @@ class DrowsinessTest(unittest.TestCase):
         """
         Test if the system detects yawning correctly.
         """
-        frame = cv2.imread("test/test_resources/driver_yawning.jpg")
+        frame = cv2.imread("src/test/test_resources/driver_yawning.jpg")
         # Detect face landmarks
         face_landmarks = self.drowsiness_detector.detect_face_landmarks(frame)
 
