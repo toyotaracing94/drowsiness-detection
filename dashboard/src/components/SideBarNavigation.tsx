@@ -18,7 +18,7 @@ const SideBarNavigation: React.FC<{collapsed: boolean}> = ({ collapsed }) => {
       <Sidebar style={{top:'auto'}} collapsed={collapsed} breakPoint='xl' toggled={!collapsed}>
         <Menu>
           <MenuItem active={isActive('/')} component={<Link to="/" />} icon={<DashboardCustomizeOutlinedIcon/>}> Dashboard</MenuItem>
-          <MenuItem active={isActive('/event-gallery')} component={<Link to="/event-gallery" />} icon={<CalendarViewMonthOutlinedIcon/>}> Event Gallery</MenuItem>
+          <MenuItem active={isActive('/gallery')} component={<Link to="/gallery" />} icon={<CalendarViewMonthOutlinedIcon/>}> Event Gallery</MenuItem>
         </Menu>
       </Sidebar>
     </Box>
