@@ -1,11 +1,12 @@
 import threading
 
-from backend.tasks.detection_task import DetectionTask
 from backend.hardware.camera.base_camera import BaseCamera
 from backend.services.drowsiness_detection_service import DrowsinessDetectionService
-from backend.services.phone_detection_service import PhoneDetectionService
 from backend.services.hand_detection_service import HandsDetectionService
+from backend.services.phone_detection_service import PhoneDetectionService
+from backend.tasks.detection_task import DetectionTask
 from backend.utils.frame_buffer import FrameBuffer
+from backend.utils.logging import logging_default
 
 
 class DetectionBackgroundService:
@@ -61,10 +62,11 @@ class DetectionBackgroundService:
         The thread runs the `detection_loop` method of the `DetectionTask`,
         passing all required services and components.
         """
-        if self.thread and self.thread.is_alive():
-            return False
-
         try:
+            if self.thread and self.thread.is_alive():
+                logging_default.warning("Attempted to start detection, but thread is already running.")
+                return False
+            
             self.is_running = True
             self.thread = threading.Thread(
                 target=self.detection_task.detection_loop,
@@ -79,8 +81,9 @@ class DetectionBackgroundService:
                 daemon=True  # Ensure the thread exits when the main program exits
             )
             self.thread.start()
+            logging_default.info("Started detection thread.")
             return True
-        except Exception as e:
+        except Exception:
             return False
 
     def restart(self) -> bool:
@@ -90,16 +93,19 @@ class DetectionBackgroundService:
         """
         try:
             # Signal the thread to stop
+            logging_default.info("Restarting detection thread")
             self.is_running = False
 
             # Check whether old thread is active, if it's true
             # kill the thread, and make the new thread
             if self.thread and self.thread.is_alive():
+                logging_default.info("Waiting for existing thread to finish.")
                 self.thread.join(timeout=1)
 
+            self.thread = None
             # Now start a new detection thread
             return self.start()
-        except Exception as e:
+        except Exception:
             return False
         
     def pause(self) -> bool:
@@ -111,6 +117,7 @@ class DetectionBackgroundService:
         """
         self.is_running = False
         self.drowsiness_service.buzzer_service.stop_buzzer()
+        logging_default.info("Detection paused.")
         return not self.is_running
 
     def resume(self) -> bool:
@@ -121,6 +128,7 @@ class DetectionBackgroundService:
         this flag to determine whether to continue processing.
         """
         self.is_running = True
+        logging_default.info("Detection resumed.")
         return self.is_running
 
     def stop(self):
@@ -131,11 +139,14 @@ class DetectionBackgroundService:
         A timeout is used to prevent indefinite blocking.
         """
         try:
+            logging_default.info("Stopping detection thread.")
             self.is_running = False
             if self.thread:
                 self.thread.join(timeout=5)
+                logging_default.info("Detection thread joined successfully.")
+            self.thread = None
             return True
-        except Exception as e:
+        except Exception:
             return False
 
     def is_active(self) -> bool:
@@ -148,4 +159,6 @@ class DetectionBackgroundService:
             True if the background thread is alive and the detection is active; 
             False otherwise.
         """
-        return self.thread is not None and self.thread.is_alive()
+        active = self.thread is not None and self.thread.is_alive()
+        logging_default.debug(f"Detection thread active: {active}")
+        return active

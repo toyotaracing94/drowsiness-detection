@@ -1,4 +1,5 @@
 from fastapi import APIRouter, HTTPException, status
+
 from backend.domain.dto.base_response import StandardResponse
 from backend.services.detection_background_service import DetectionBackgroundService
 
@@ -26,7 +27,7 @@ def detection_control_router(detection_service: DetectionBackgroundService) -> A
         description="Re-Start the detection background thread.",
         response_model=StandardResponse
     )
-    def start_detection():
+    def restart_detection():
         try:
             status = detection_service.restart()
             return StandardResponse(status="success", message="Detection started.", data=status)
@@ -96,7 +97,7 @@ def detection_control_router(detection_service: DetectionBackgroundService) -> A
                 status="success",
                 message=f"Detection is {status_msg}.",
                 data={
-                    "is_alive_thread": is_alive_thread,
+                    "is_alive": is_alive_thread,
                     "is_running": is_running
                 }
             )
