@@ -36,7 +36,8 @@ class DetectionTask:
     def detection_loop(self, drowsiness_service : DrowsinessDetectionService, 
                    phone_detection_service : PhoneDetectionService,
                    hand_detection_service : HandsDetectionService,
-                   camera : BaseCamera, frame_buffer : FrameBuffer):
+                   camera : BaseCamera, frame_buffer : FrameBuffer, 
+                   background_service):
         """
         This function serves as the main inference of the loop of the machine learning models.
 
@@ -53,6 +54,9 @@ class DetectionTask:
         frame_buffer (FrameBuffer):
             Shared object for storing the latest raw and processed frames 
             for access by other components (e.g., HTTP endpoints).
+        background (DetectionBackgroundService):
+            Service managing background tasks such as periodic logging, system health monitoring, 
+            or asynchronous handling of detection results.
         
         Notes
         ----------
@@ -64,6 +68,11 @@ class DetectionTask:
         self.prev_time = time.time()
 
         while True:
+            if not background_service.is_running:
+                # Paused state: just sleep briefly and continue the loop without processing
+                time.sleep(0.01)
+                continue
+            
             ret, original_frame = camera.get_capture()
             if not ret:
                 time.sleep(0.01)
